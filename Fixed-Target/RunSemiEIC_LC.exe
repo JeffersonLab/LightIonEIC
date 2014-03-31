@@ -1,0 +1,125 @@
+#! /usr/bin/perl
+use Math::Trig;
+use Math::Complex;
+
+# This is for tranforming Ntuple from Lund output.
+$firsttime =1;
+
+if($firsttime==1){
+#####  put your the run number range $ir :
+     for($ir=200;$ir<201;$ir++){
+	$run = $ir;
+	$run2 = $ir;
+	system("rm -f comis*.inc");
+	system("rm -f  gn_ed_eic.input");
+	# system("ln -s fsgen_feed/gn_ed_eic$ir.txt ./gn_ed_eic.input");
+
+# data handling.....
+	open(predat,"fsgen_feed/gn_ed_eic$ir.txt");
+	@old = <predat>;
+	close(redat);
+	$nevnt = ($#old+1)/5;
+
+	open(preout,">gn_ed_eic.input");
+
+	for($ll=0;$ll<$nevnt;$ll++){
+	    $l1 = 5*($ll);
+	    $count = substr($old[$l1],5,7);
+	    $nptls = substr($old[$l1],21,3);
+	    $W2 = substr($old[$l1],25,14);
+	    $Q2 = substr($old[$l1],40,14);
+	    $nu = substr($old[$l1],55,14);
+	    if($nptls/1.==4){$newnptls=3;}
+	    # printf preout (" $count $newnptls  $W2 $Q2 $nu \n");
+	    printf  preout ("     $count          $newnptls  $W2 $Q2 $nu \n");
+	    $l2 = 5*($ll)+1;
+	    printf preout ("$old[$l2]");
+	    $l3 = 5*($ll)+2;
+	    printf preout ("$old[$l3]");
+
+	    $Xptl = 71; # assigned dummy particle ID
+	    $ptl_sta = 1; # daughter particle
+
+	    $l4 = 5*($ll)+3;
+	    $dum1_px = substr($old[$l4],18,12);
+	    $dum1_py = substr($old[$l4],30,12);
+	    $dum1_pz = substr($old[$l4],42,12);
+	    $dum1_E  = substr($old[$l4],54,12);
+	    $dum1_M  = substr($old[$l4],66,12);
+	    $dum1_vx = substr($old[$l4],78,12);
+	    $dum1_vy = substr($old[$l4],90,12);
+	    $dum1_vz = substr($old[$l4],102,12);
+
+	    $l5 = 5*($ll)+4;
+	    $dum2_px = substr($old[$l5],18,12);
+	    $dum2_py = substr($old[$l5],30,12);
+	    $dum2_pz = substr($old[$l5],42,12);
+	    $dum2_E  = substr($old[$l5],54,12);
+	    $dum2_M  = substr($old[$l5],66,12);
+	    $dum2_vx = substr($old[$l5],78,12);
+	    $dum2_vy = substr($old[$l5],90,12);
+	    $dum2_vz = substr($old[$l5],102,12);
+
+
+# momentum sum between two ptls
+	    $dum_px = $dum1_px + $dum2_px;
+	    $dum_py = $dum1_px + $dum2_px;
+	    $dum_pz = $dum1_px + $dum2_px;
+	    $dum_E  = $dum1_E  + $dum2_E;
+	    $dum_M  = $dum1_M  + $dum2_M;
+# vertex sum between two ptls (should be checked later.....incorrect..now doesn't matter due to 0.0 vertex)
+	    $dum_vx = $dum1_vx + $dum2_vx;
+	    $dum_vy = $dum1_vy + $dum2_vy;
+	    $dum_vz = $dum1_vz + $dum2_vz;
+
+	    printf preout ("     $ptl_sta    $Xptl     0   %5.3e   %5.3e   %5.3e   %5.3e   %5.3e   %5.3e   %5.3e   %5.3e \n",$dum_px,$dum_py,$dum_pz,$dum_E,$dum_M,$dum_vx,$dum_vy,$dum_vz);
+
+
+
+	}
+	close(preout);
+
+	print " call data: fsgen_feed/gn_ed_eic$ir.txt ./gn_ed_eic.input \n";
+
+
+
+	system("rm -f a.out");
+	system("f95 semi_eic.f");
+	system("rm -f ed_semi_eic77.dat");
+	system("./a.out");
+	print "end the run \n";
+
+#system("./CalTotCRS.exe");
+
+	print "\n make sure you have all variable in your Ntuple \n";
+	system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b vwrite_long.kumac");
+
+	system("rm -f temp.size");
+	system("ls -s ./nt10_data.enx_1.hbook > temp.size");
+	open(t,"temp.size");
+	@ttt=<t>;
+	close(t);
+	@aaa = split(/\./,$ttt[0]);
+	$filesize= $aaa[0]/1.;
+	print "$filesize \n";
+#	sleep(1000);
+
+	if($filesize>10){
+	    system("mv  ./nt10_data.enx_1.hbook  ./ednt10/nt10_data.enx\_$run2.hbook");
+	}
+#	sleep(5);
+    }
+
+    print "Created Ntuple size check \n";
+    system("ls -al ednt10/*.hbook");
+    system("./select_gdata.exe");
+
+#     system("RunF2D_angle.exe");
+#     system("RunF2D_tprim.exe");
+
+}
+else{
+    # print "check the result~!!! \n I hope it shows a right direction~! \n";
+    # system("RunF2D_angle.exe");
+    # system("RunF2D_tprim.exe");
+}

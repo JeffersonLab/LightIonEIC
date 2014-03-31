@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+# Perl module to run 
+############################################################
+# Set defaults
+#####  put your the run number range $ir :
+for($ir=200;$ir<201;$ir++){
+
+
+$run =$ir;
+# $DIR = "/u/site/www/html/Hall-B/secure/e1-6/parkkj/local_disk/eic_ldrd2013_sources/study003/fsgen_data";
+$DIR = ".";
+system("rm -f gn_nspec_*.evt ");
+system("rm -f  gn_nspec_*.log ");
+system("rm -f gn_nspec_*.hbook ");
+
+system("rm -f gp_nspec_*.evt ");
+system("rm -f  gp_nspec_*.log ");
+system("rm -f gp_nspec_*.hbook ");
+
+system("rm -f gp_pee_*.evt ");
+system("rm -f  gp_pee_*.log ");
+system("rm -f gp_pee_*.hbook ");
+system("rm -f test_in.evt ");
+system("rm -f *gn_ed_eic.txt ");
+
+
+system("cp $DIR/fsgen_input.standard ./input.temp");
+
+open(ifile,"input.temp");
+@read=<ifile>;
+close(ifile);
+
+$lower=100000;
+$upper=999999;
+
+$random = int(rand($upper-$lower+1))+$lower;
+open(ofile,">fsgen_input");
+for($i=0;$i<=$#read;$i++){
+    if($read[$i]=~s/randnumber/$random/){
+	print ofile ("$read[$i]");
+    }
+    else{
+	print ofile ("$read[$i]");
+    }
+}
+close(ofile);
+
+
+# system("more fsgen_input");
+
+
+system("./fsgen");
+
+print "check out: gn_nspec_eic_001.evt and  gn_ed_eic.txt \n";
+system("ls -lt gn_nspec_eic_001.evt gn_ed_eic.txt");
+system("mv  gn_ed_eic.txt ./fsgen_feed/gn_ed_eic$run.txt");
+
+sleep(5);
+
+}

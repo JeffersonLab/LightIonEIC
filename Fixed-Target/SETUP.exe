@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+# Perl module to run 
+############################################################
+# Set up 
+
+
+
+
+print "This is the script to build up event generator subdirectory \n";
+system("rm -rf build_system  fsgen ");
+
+system(" svn co https://jlabsvn.jlab.org/svnroot/clas/build_system/");
+system(" svn co https://jlabsvn.jlab.org/svnroot/clas/trunk/simulation/generators/fsgen/");
+system("source /group/clas/builds/environment.csh");
+
+
+###  4 modified files should be copied to ./fsgen/
+
+system("scp ./modified_fsgen_code/fermi_bonn.F ./fsgen");
+system("scp ./modified_fsgen_code/fsgen_phot.F ./fsgen");
+system("scp ./modified_fsgen_code/RunLDRD_LowX.exe ./fsgen");
+system("scp ./modified_fsgen_code/fsgen_input.standard ./fsgen");
+
+print "Then, link to the data storage...\n";
+
+system("ln -s ../fsgen_feed ./fsgen/fsgen_feed");
+
+
+print "Directories are recontructed.....finished~!!!\n";
+print "Ready to compile go to ./fsgen/ then type scons \n";
