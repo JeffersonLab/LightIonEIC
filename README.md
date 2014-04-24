@@ -8,5 +8,5 @@ Hyde - The Hyde directory contains code to calculate the electron-ion collision 
 
 -
 
-git clone https//github.com/JeffersonLab/LightIonEIC
+git clone https://github.com/JeffersonLab/LightIonEIC
 
