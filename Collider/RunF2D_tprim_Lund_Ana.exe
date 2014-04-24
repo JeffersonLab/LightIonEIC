@@ -1,0 +1,8 @@
+#! /usr/bin/perl
+use Math::Trig;
+use Math::Complex;
+
+system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b got_eic_report.kumac");
+
+
+print "please check output ** mc_fsgen_eic_2014tprim_crs_report.hbook ** \n\n";

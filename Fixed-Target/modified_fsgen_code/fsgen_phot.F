@@ -149,7 +149,8 @@ C
                EndIf
                PHMASS=-Q2
             elseif(xmax.gt.0)then
-               xb=xmin+getrand(-1.)/100*(xmax-xmin)
+c$$$               xb=xmin+getrand(-1.)/100*(xmax-xmin)
+               xb=xmin+getrand(-1.)*(xmax-xmin)
                if(cohl.eq.0.)then
                   q2=xb*(w2-pmass**2)/(1.-xb)
                else
@@ -160,8 +161,9 @@ C
                stop
             endif
          elseif(xmax.gt.0)then
-            xb=xmin+getrand(-1.)/100*(xmax-xmin)
-            if(q2max.gt.0.)then
+c$$$            xb=xmin+getrand(-1.)/100*(xmax-xmin)
+              xb=xmin+getrand(-1.)*(xmax-xmin)
+             if(q2max.gt.0.)then
                If(nq2.gt.0)then
  211              call FunLUX(Q2Space,q2,1)
                   if(q2.lt.q2min.or.q2.gt.q2max)goto211

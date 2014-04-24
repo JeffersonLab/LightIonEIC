@@ -190,10 +190,11 @@ c$$$        endif
 c$$$      END DO
 c$$$ 2     P1 = 0.001*J+0.001*getrand(-1.)
 
-      P1 = 0.5*getrand(-1.)+0.005*getrand(-1.)
-      pfermi(1) = ABS(P1)*SIN(A)*COS(B)
-      pfermi(2) = ABS(P1)*SIN(A)*SIN(B)
-      pfermi(3) = ABS(P1)*COS(A)
+c$$$      P1 = 0.5*getrand(-1.)+0.005*getrand(-1.)
+      P1 = 0.25*getrand(-1.)
+      pfermi(1) = ABS(sqrt(P1))*SIN(A)*COS(B)
+      pfermi(2) = ABS(sqrt(P1))*SIN(A)*SIN(B)
+      pfermi(3) = ABS(sqrt(P1))*COS(A)
 C
       RETURN
       END

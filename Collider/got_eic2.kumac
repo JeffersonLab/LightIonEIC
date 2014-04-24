@@ -1,0 +1,7 @@
+ macro got_eic2.kumac
+   
+    exe ntread_0.enx.kumac mct_eic2.f
+  | exe temp.kumac mct_eic2.f
+   h/file 1 mc_fsgen_eic_2014tprim2.hbook 1024 -N
+   h/hio/hrout '0' 'T'
+   close 0;

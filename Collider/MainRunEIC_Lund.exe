@@ -1,0 +1,127 @@
+#! /usr/bin/perl
+use Math::Trig;
+use Math::Complex;
+
+print "please double check electron and Deuteron beam enegies in the code (semi_eic_lund.f) ...\n\n\n";
+
+print "Give the start run number [10000]\n";
+$srunnum = <STDIN>;
+chop($srunnum);
+
+print "Give the end run number [10099]\n";
+$erunnum = <STDIN>;
+chop($erunnum);
+
+
+print (" *\n **\n *****\n *******\n Running the Cross-section weighting \n *******\n *****\n **\n *\n \n");
+print "Do you want to run *FIXED TARGET CONFIGURATION*  ?? [y/n]\n";
+
+chop($ansCONF = <STDIN>);
+
+if($ansCONF eq 'yes'||$ansCONF eq 'YES'||$ansCONF eq 'Y'||$ansCONF eq 'y'){
+
+    print "\n\n\n OK, I am going to generate event based on FIXED TARGET CONFIGURATION~~!!!!\n\n\n";
+    if($srunnum<=$erunnum){
+
+	for($ir=$srunnum;$ir<=$erunnum;$ir++){
+
+	    $run = $ir;
+	    $run2 = $ir+100;
+	    system("rm -f comis*.inc");
+	    system("rm -f  gn_ed_eic.input");
+	    system("ln -s ./eic_collider_data/gn_ed_eic$ir.fix ./gn_ed_eic.input");
+	    print " call data: eic_collider_data/gn_ed_eic$ir.fix ./gn_ed_eic.input \n";
+
+	    system("rm -f a.out");
+	    system("f95 semi_eic_ana0.f");
+	    system("rm -f ed_semi_eic77.dat");
+	    system("./a.out");
+	    print "end the run \n";
+
+	    print "\n make sure you have all variable in your Ntuple \n";
+	    system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b vwrite_long.kumac");
+	    
+	    system("rm -f temp.size");
+	    system("ls -s ./nt10_data.enx_1.hbook > temp.size");
+	    open(t,"temp.size");
+	    @ttt=<t>;
+	    close(t);
+	    @aaa = split(/\./,$ttt[0]);
+	    $filesize= $aaa[0]/1.;
+	    print "$filesize \n";
+	    print "completed analysis with Run number $ir \n \n";
+	    
+	    if($filesize>10){
+		system("mv  ./nt10_data.enx_1.hbook  ./ednt10/nt10_fix.enx\_$run2.hbook");
+	    }
+
+	}
+
+	print "Created Ntuple size check \n";
+	system("ls -al ednt10/*.hbook");
+	system("./select_gdata_fix.exe");
+
+	system("RunF2D_tprim0.exe");
+
+    }
+}
+elsif($ansCONF eq 'no'||$ansCONF eq 'NO'||$ansCONF eq 'N'||$ansCONF eq 'n'){
+    
+# for the collider configuration test
+    
+    print "\n\n\n OK, I am going to generate event based on COLLIDER CONFIGURATION~~!!!!\n\n\n";
+    if($srunnum<=$erunnum){
+	
+	for($ir=$srunnum;$ir<=$erunnum;$ir++){
+	    
+	    $run = $ir;
+	    $run2 = $ir;
+	    system("rm -f comis*.inc");
+	    system("rm -f  gn_ed_eic.input");
+	    system("ln -s ./eic_collider_data/gn_ed_eic$ir.coll ./gn_ed_eic.input");
+	    print " call data: eic_collider_data/gn_ed_eic$ir.coll ./gn_ed_eic.input \n";
+	    
+	    system("rm -f a.out");
+	    system("f95 semi_eic_lund.f");
+	    system("rm -f ed_semi_eic77.dat");
+	    system("./a.out");
+	    system("rm -f ./lund_out/lund_ed_eic$ir.dat");
+# create LUND out put
+	    system("mv ed_semi_eic77.dat ./lund_out/lund_ed_eic$ir.dat");
+
+# nptl,ntgt,nproton,x,xinv_q2,xinv_alpha,xinv_pRT,tprime_KJ,crs1,dum2
+# electron :  egen,echarge,pid,pe_x,pe_y,pe_z,pe_E,pe_M,ve_x,ve_y,ve_z
+# spectator:  sgen,scharge,pid1,p_rx,p_ry,p_rz,E_r,pm,v_rx,v_ry,v_rz
+
+	    system("rm -f a.out");
+	    system("f95 semi_eic_lund_ana.f");
+	    system("rm -f ed_semi_eic77.dat");
+	    system("./a.out");
+	    print "end the run \n";
+
+	    print "\n make sure you have all variable in your Ntuple \n";
+	    system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b vwrite_long.kumac");
+	    
+	    system("rm -f temp.size");
+	    system("ls -s ./nt10_data.enx_1.hbook > temp.size");
+	    open(t,"temp.size");
+	    @ttt=<t>;
+	    close(t);
+	    @aaa = split(/\./,$ttt[0]);
+	    $filesize= $aaa[0]/1.;
+	    print "$filesize \n";
+	    print "completed analysis with Run number $ir \n \n";
+	    
+	    if($filesize>10){
+		system("mv  ./nt10_data.enx_1.hbook  ./ednt10/nt10_coll.enx\_$run2.hbook");
+	    }
+	}
+	
+	print "Created Ntuple size check \n";
+	system("ls -al ednt10/*.hbook");
+	system("./select_gdata_coll.exe");
+	
+	system("RunF2D_tprim_Lund_Ana.exe");
+	
+    }
+}

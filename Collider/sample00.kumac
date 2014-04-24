@@ -1,0 +1,43 @@
+macro readnt10_e1f 1=-f 2=0 3=0 4=1 
+* exe readnt10_eg3.kumac *.f 99 150000 1
+* 1=> Name of the user function (should have one dummy argument)  
+* 2=> Number of files to process 
+* 3=> Number of events in each file that needs to be processed  
+* 4=> File to start (will be processed file [4] up to file [4]+[2]) 
+* Runs chain of N-tuples - 
+
+mess [1] [2] [3] [4]  
+i = 0 
+i1 = 0 
+i2 = 0 
+i3 = 0
+i4 = 0
+i5 = 0 
+i6 = 0
+i7 = 0
+i8 = 0
+i9 = 0
+i10 = 0
+i11 = 0
+i12 = 0
+i13 = 0
+i14 = 0
+i15 = 0
+i16 = 0
+i17 = 0
+i18 = 0
+i19 = 0
+i20 = 0
+i21 = 0
+i22 = 0
+i23 = 0
+i24 = 0
+i25 = 0
+i26 = 0
+i27 = 0
+i28 = 0
+i29 = 0
+i30 = 0
+s = [4] 
+i100 = 0 
+*

@@ -1,0 +1,195 @@
+macro allplot_f2d_tprim_extract
+   
+         
+   opt nfile
+   opt nstat
+   set *
+   opt liny
+   opt linx
+   set ncol 28; pal 1;
+   
+   set pass 3
+   set ymgl 2.
+   set ymgu 2.
+
+   set vsiz 0.2
+   set asiz 0.45
+   set tsiz 0.00000001
+   set csiz 0.15
+
+   set xlab 0.1
+   set ylab 2.5
+
+   opt linz
+   set xval 0.25
+   set yval 0.1
+   set NDVX 10.00
+   set NDVY 12.00
+   set smgr 0.00565
+   
+   opt stat
+
+    set fcol 2
+    
+    xmin0 = 0.
+    xmax0 = 2.
+      | do loop for thrown and reconstruction event
+  
+    ymin0 = 1.
+    ymax1 = 1000.
+    
+|    set ysiz 63
+|    set xsiz 39
+    
+   
+   set ywin 0.5
+   set xwin 0.9
+   set xmgl 3.0
+   set xmgr 2.5
+   
+   set xsiz 20
+   
+   
+   v/cre xbjmin(6) r 0.05 0.1 0.2 0.4 0.6 0.8
+   v/cre xbjmax(6) r 0.1 0.2 0.4 0.6 0.8 1.0
+   
+   v/cre q2n(10) r 0.6 1.2 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
+   v/cre q2min(10) r 0.5 0.7 1.5 3. 4. 5. 6. 7. 8. 9.
+   v/cre q2max(10) r 0.7 1.5 3. 4. 5. 6. 7. 8. 9. 10.
+   
+   v/cre q2n2(10) r 0.7 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
+   v/cre q2min2(10) r 0.5 1. 2. 3. 4. 5. 6. 7. 8. 9.
+   v/cre q2max2(10) r 1. 2. 3. 4. 5. 6. 7. 8. 9. 10
+ 
+     
+   v/cre ymaxset(5) r 20000000. 2000000. 600000. 60000. 60000.
+   v/cre ymaxfit(5) r 17000000. 1500000. 390000. 39000. 39000.
+  
+     
+   | for/file 99 alpha_q2_dependence.ps
+   | meta 99 -113
+   
+|   h/file 1 mc_fsgen_eic_2014tprim_crs1.hbook
+   h/file 1 mc_fsgen_eic_2014tprim_crs.hbook 
+|   h/file 1 mc_fsgen_eic_2014tprim_crs_er.hbook 
+
+    
+    set xmgl 2.9
+    set xmgr 1.
+    
+    
+    ofilename = ./f2d_stf_ascii_tprim_crs1.dat
+|     ofilename = ./f2d_stf_ascii_tprim_crs.dat
+|   ofilename = ./f2d_stf_ascii_tprim_crs_spec.dat
+     
+   
+   do ix=1,6
+     xbj1 = xbjmin([ix])
+     xbj2 = xbjmax([ix])
+     xbj = ([xbj1]+[xbj2])/2
+     xbjbin = [ix]
+     
+     
+   
+   if [ix] .eq. 1 then
+     iqm=2;iqx=4;
+   endif
+   if [ix] .eq. 2 then
+     iqm=2;iqx=8;
+   endif
+   if [ix] .ge. 3 then
+     iqm=2;iqx=9;
+   endif
+   
+   
+   do iq=[iqm],[iqx]
+    
+     ymax0 = ymaxset([iq])/100
+     ymaxfit0 = ymaxfit([iq])/100
+     
+      if [ix] .lt. 2 then
+       q2in1 = q2min([iq])
+       q2in2 = q2max([iq])
+       q2val = q2n([iq])
+      else
+        q2in1 = q2min2([iq])
+        q2in2 = q2max2([iq])
+        q2val = q2n2([iq])
+      endif
+     
+     | mess [q2in]
+     | wait
+     
+     
+     zone 4 5
+     
+     do it=1,19
+       itt1 = 0.005+0.005*([it]-1)
+       itt2 = 0.005+0.005*([it])
+       itt = ([itt1]+[itt2])/2
+       
+     | do it=1,19
+     |   itt1 = 0.0+9.*([it]-1)
+     |   itt2 = 0.0+9.*([it])
+     |   itt = ([itt1]+[itt2])/2
+       
+      
+       | crs 
+       HID9 = 90000+1000*[ix]+100*[iq]+[it]
+       
+       
+   
+     IGSET PMCI 2
+     IGSET PLCI 2
+     IGSET LTYP 2
+     opt logy
+     set hcol 4
+     h/plot [HID9]
+     set hcol 1
+     ctemp = $hinfo([HID9],'sum')
+ 
+     vec/cr vevnt(1); 
+     vec/cr vevnt2(1); 
+     vec/cre vxb(1); vec/cre vq2(1); vec/cre vtt(1);
+     
+     irun =0
+     VEC/INPUT  vxb(1) $eval([xbj])
+     VEC/INPUT  vq2(1) $eval([q2val])
+     VEC/INPUT  vtt(1) $eval([itt])
+     VEC/INPUT  vevnt(1) $eval([ctemp])
+     
+       VEC/WRITE vxb(1),vq2(1),vtt(1),vevnt(1) [ofilename]  f6.2,',',f6.2,',',f9.4,',',e15.5 o
+ 
+     vec/del vevnt,vxb,vq2,vtt
+     
+     
+     opt liny
+     exe window#push
+     igset txci 1
+     if [it] .eq. 1 then
+       text  0.65  1.15 'Q^2!='//$eval([q2in1]) 0.5
+       text  1.45  1.15 '-'//$eval([q2in2]) 0.5
+       text  1.99  1.15 '(GeV^2!)' 0.5
+       text  2.95  1.15 'x?BJ!='//$eval([xbj1]) 0.5
+       text  3.75  1.15 '-'//$eval([xbj2]) 0.5
+     endif
+     text  0.05  0.4 '-t^/!='//$eval([itt1]) 0.2
+     text  0.55  0.4 '-'//$eval([itt2]) 0.2
+  |   text  0.79  0.4 ' (GeV^2!)' 0.3
+     if [it] .gt. 16 then
+       text  0.5  -0.3 'F?2^D!(x,Q^2!)' 0.2
+     endif
+     exe window#pop
+     
+     h/del *
+     
+   enddo
+|      pic/print ./mc_eic_pic2014/f2d_distribution_xbj_[ix]_q2_[iqq].gif
+  enddo
+ 
+ 
+ enddo
+ 
+ vec/del ymaxset,ymaxfit,q2n,q2min,q2max,q2n2,q2min2,q2max2
+ vec/del   xbjmin,xbjmax
+   close 0

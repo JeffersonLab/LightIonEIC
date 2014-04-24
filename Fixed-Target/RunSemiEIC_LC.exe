@@ -72,6 +72,10 @@ if($firsttime==1){
 	    $dum_vy = $dum1_vy + $dum2_vy;
 	    $dum_vz = $dum1_vz + $dum2_vz;
 
+
+## I have to check once again...later...
+	    $dum_M = sqrt($dum_E**2-$dum_px**2-$dum_py**2-$dum_pz**2);
+
 	    printf preout ("     $ptl_sta    $Xptl     0   %5.3e   %5.3e   %5.3e   %5.3e   %5.3e   %5.3e   %5.3e   %5.3e \n",$dum_px,$dum_py,$dum_pz,$dum_E,$dum_M,$dum_vx,$dum_vy,$dum_vz);
 
 
