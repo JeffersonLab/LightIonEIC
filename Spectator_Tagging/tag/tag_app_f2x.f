@@ -45,8 +45,8 @@ C
 C
 C        ...STRUCTURE FUNCTION
 C
-         CALL TAGFN(F2P, X, QQ, 1)
-         CALL TAGFN(F2N, X, QQ, 2)
+         CALL TAGFN(F2P, X, QQ, 1, 1)
+         CALL TAGFN(F2N, X, QQ, 2, 1)
 C
 C        PRINT 90000,    X, F2P, F2N
          WRITE(2, 90000) X, F2P, F2N

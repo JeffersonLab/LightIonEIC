@@ -1,5 +1,5 @@
 *DECK TAGFN
-      SUBROUTINE TAGFN(F2, X, QQ, IPN)
+      SUBROUTINE TAGFN(F2, X, QQ, IPN, SCLING)
 C
 C     PACKAGE TAG -- DEUTERON DIS WITH SPECTATOR TAGGING
 C     AUTHOR C. WEISS (WEISS.AT.JLAB.ORG)
@@ -31,15 +31,18 @@ C
       CALL GRV98PA(ISET, X, QQ, UV, DV, US, DS, SS, GL)
 C
       IF (IPN.EQ.1)      THEN
-         F2 = (EU**2*(UV + 2*US)
+         F2 = SCLING * 
+     *       (EU**2*(UV + 2*US)
      *      + ED**2*(DV + 2*DS)
-     *      + ES**2*(     2*SS)
+     *      + ES**2*(     2*SS))
       ELSE IF (IPN.EQ.2) THEN
-         F2 = EU**2*(DV + 2*DS)
+         F2 = SCLING * 
+     *       (EU**2*(DV + 2*DS)
      *      + ED**2*(UV + 2*US)
-     *      + ES**2*(     2*SS)
+     *      + ES**2*(     2*SS))
       ENDIF
 C
+C     PRINT *,"F2 returned as ", F2
       END
 C
 C---------------------------------------------------------------------

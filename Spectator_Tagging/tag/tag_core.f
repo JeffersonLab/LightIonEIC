@@ -18,7 +18,7 @@ C
 C---------------------------------------------------------------------
 C
 *DECK TAGX
-      SUBROUTINE TAGX(FSIG, SED, X, QQ, ALR, PTR, IPN)
+      SUBROUTINE TAGX(FSIG, SED, X, QQ, ALR, PTR, IPN, SCLING)
 C
 C     DEUTERON TAGGED ELECTROPRODUCTION CROSS SECTION
 C
@@ -73,7 +73,7 @@ C
 C
 C     ...STRUCTURE FUNCTIONS
 C
-      CALL TAGFD(F2, X, QQ, ALR, PTR, IPN)
+      CALL TAGFD(F2, X, QQ, ALR, PTR, IPN, SCLING)
 C
 C     ...CROSS SECTION
 C
@@ -84,7 +84,7 @@ C
 C---------------------------------------------------------------------
 C
 *DECK TAGFD
-      SUBROUTINE TAGFD(F2, X, QQ, ALR, PTR, IPN)
+      SUBROUTINE TAGFD(F2, X, QQ, ALR, PTR, IPN, SCLING)
 C
 C     DEUTERON TAGGED STRUCTURE FUNCTION IN IMPULSE APPROXIMATION
 C
@@ -108,7 +108,7 @@ C     ...STRUCTURE FUNCTION
 C
       XEFF = X/(2 - ALR)
 C
-      CALL TAGFN(FN2, XEFF, QQ, IPN)
+      CALL TAGFN(FN2, XEFF, QQ, IPN, SCLING)
 C
       F2 = S*FN2
 C
