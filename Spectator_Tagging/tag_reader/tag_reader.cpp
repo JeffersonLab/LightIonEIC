@@ -1,3 +1,7 @@
+//Written by Oz Amram 6/13/2014
+//
+//Reads data from ../tag/EVTP.OUT and plots it as well as storing it in a root file
+
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -77,30 +81,28 @@ void make_graph(const TTree *tree){
    TCanvas *c2 = new TCanvas("c2", "2nd Graph", 700, 700);
    //make t' vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
-   pad1->SetLogy();
-   int size = tree -> Draw("FSIG:sqrt(PR2)","", "goff");//easiest way to turn tree data to graph
+   pad1->SetLogy(); //make Y axis on log scale
+   int size = tree -> Draw("FSIG:abs(TP)","PR2 != 0", "goff");//easiest way to turn tree data to graph
    TGraph * grph1 = new TGraph(size, tree->GetV2(), tree->GetV1());
-   grph1->GetXaxis()->SetTitle("Recoil Momentum (GEV)");
+   grph1->GetXaxis()->SetTitle("t' (GEV^2)");
    grph1->GetXaxis()->CenterTitle();
    grph1->GetYaxis()->SetTitle("Cross Section (NB/GEV^4)");
    grph1->GetYaxis()->CenterTitle();
    grph1 ->SetMarkerStyle(7);
-   //grph1 -> SetMaximum(500);
-   //grph1 -> SetMinimum(0);
    grph1 -> Draw("APL");
-   grph1 ->SetTitle("Cross Section vs Recoil Momentum");
+   grph1 ->SetTitle("Cross Section vs t'");
 
    //make t' vs F2N/POL graph
    c2 -> cd();
-   int size = tree -> Draw("F2_SPOL:sqrt(PR2)","", "goff");//easiest way to turn tree data to graph
+   int size = tree -> Draw("F2_SPOL:abs(TP)","PR2 !=0", "goff");//easiest way to turn tree data to graph
    TGraph * grph2 = new TGraph(size, tree->GetV2(), tree->GetV1());
-   grph2->GetXaxis()->SetTitle("Recoil Momentum (GEV)");
+   grph2->GetXaxis()->SetTitle("t' (GEV^2)");
    grph2->GetXaxis()->CenterTitle();
    grph2->GetYaxis()->SetTitle("Tagged F2/POLE Factor");
    grph2->GetYaxis()->CenterTitle();
    grph2 ->SetMarkerStyle(7);
    grph2 -> Draw("APL");
-   grph2 ->SetTitle("F2/POLE vs Recoil Momentum");
+   grph2 ->SetTitle("F2/POLE vs t'");
 
 
    c1 -> Update();

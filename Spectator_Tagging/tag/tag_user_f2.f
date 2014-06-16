@@ -31,7 +31,7 @@ C
       CALL GRV98PA(ISET, X, QQ, UV, DV, US, DS, SS, GL)
 C
       IF (IPN.EQ.1)      THEN
-         F2 = EU**2*(UV + 2*US)
+         F2 = (EU**2*(UV + 2*US)
      *      + ED**2*(DV + 2*DS)
      *      + ES**2*(     2*SS)
       ELSE IF (IPN.EQ.2) THEN
