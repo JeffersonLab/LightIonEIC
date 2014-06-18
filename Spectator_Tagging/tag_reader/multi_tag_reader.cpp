@@ -1,14 +1,27 @@
-//Written by Oz Amram 6/13/2014
+//Written by Oz Amram 6/18/2014
 //
-//Reads data from ../tag/EVTP.OUT and plots it as well as storing it in a root file
+//Reads data from  3 EVTP2.OUT, EVTP3.OUT, EVTP4.OUT located in ../tag/
+//plots the data on the same graph as well as storing it in a root file
 
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <unistd.h>
-
+#include <sstream>
+#include <iostream>
+#include <typeinfo>
+#include <vector>
 
 using namespace std;
+
+string int_to_string(int i){
+   //a hack to work around a bug with to_string
+   //see http://stackoverflow.com/questions/12975341/to-string-is-not-a-member-of-std-says-so-g
+   ostringstream ss;
+   ss << i;
+   return ss.str();
+}
+
 
 string get_outfile_path(int index){
     // returns the path to the EVTP.OUT file
@@ -17,19 +30,24 @@ string get_outfile_path(int index){
     getcwd(cur_path, FILENAME_MAX);
     string str_path = string(cur_path);
     unsigned end_dir = str_path.find_last_of("/\\");
-    string outfile_path = str_path.substr(0,end_dir) + "/tag/EVTP"+ string(index) +".OUT";
+    string outfile_path = str_path.substr(0,end_dir) + "/tag/EVTP"+ int_to_string(index)
+    +".OUT";
     //cout <<  outfile_path << endl;
     return outfile_path;
 }
 void print_my_tree(TTree *tree){
    Float_t tp_val = 0.0;
+   Float_t fsig=0.0;
    TBranch *tp_branch = 0;
+   TBranch *fsig_branch =0; 
 
-   tree->SetBranchAddress("TP", &tp_val, &tp_branch);
+   tree->SetBranchAddress("TP2", &tp_val, &tp_branch);
+   tree ->SetBranchAddress("FSIG2", &fsig, &fsig_branch);
    Int_t entries = tree->GetEntries();
    for(int i=0; i<entries; i++){
         tp_branch->GetEntry(i);
-        cout << tp_val <<endl;
+        fsig_branch->GetEntry(i);
+        cout << tp_val <<" , "<< fsig<<endl;
     }
 
 }
@@ -74,91 +92,163 @@ void HallA_style() {
 
 
 
-void make_graph(const TTree *tree){
+void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec, 
+                 vector<Float_t> FSIG3_vec,  vector<Float_t> FSIG4_vec,
+                 vector<Float_t> FSIG_ratio_2_3, vector<Float_t> FSIG_ratio_4_3){
    HallA_style(); //make it pretty
-   TCanvas *c1 = new TCanvas("c1", "First Graph", 700, 700);
-   c1 ->Size(0,0);
-   TCanvas *c2 = new TCanvas("c2", "2nd Graph", 700, 700);
+   TCanvas *c1 = new TCanvas("c1", "Cross Sections", 700, 700);
    //make t' vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
    pad1->SetLogy(); //make Y axis on log scale
-   int size = tree -> Draw("FSIG:abs(TP)","PR2 != 0", "goff");//easiest way to turn tree data to graph
-   TGraph * grph1 = new TGraph(size, tree->GetV2(), tree->GetV1());
-   grph1->GetXaxis()->SetTitle("t' (GEV^2)");
-   grph1->GetXaxis()->CenterTitle();
-   grph1->GetYaxis()->SetTitle("Cross Section (NB/GEV^4)");
-   grph1->GetYaxis()->CenterTitle();
-   grph1 ->SetMarkerStyle(7);
-   grph1 -> Draw("APL");
-   grph1 ->SetTitle("Cross Section vs t'");
+   //all the data has the same TP values so we use the same
+   int size = TP_vec.size();
+   TGraph * grph1 = new TGraph(size, &TP_vec[0], &FSIG2_vec[0]);
+   grph1 -> SetMarkerStyle(21);
+   grph1 -> SetMarkerColor(2);
+   grph1 -> SetTitle("1.1 * F2N");
+   TGraph * grph2 = new TGraph(size, &TP_vec[0], &FSIG3_vec[0]);
+   grph2 -> SetMarkerStyle(21);
+   grph2 -> SetMarkerColor(3);  
+   grph2 -> SetTitle("Nominal F2N");
+   TGraph * grph3 = new TGraph(size, &TP_vec[0], &FSIG4_vec[0]);
+   grph3 -> SetMarkerStyle(21);
+   grph3 -> SetMarkerColor(4);
+   grph3 -> SetTitle("0.9 * F2N");
 
-   //make t' vs F2N/POL graph
-   c2 -> cd();
-   int size = tree -> Draw("F2_SPOL:abs(TP)","PR2 !=0", "goff");//easiest way to turn tree data to graph
-   TGraph * grph2 = new TGraph(size, tree->GetV2(), tree->GetV1());
-   grph2->GetXaxis()->SetTitle("t' (GEV^2)");
-   grph2->GetXaxis()->CenterTitle();
-   grph2->GetYaxis()->SetTitle("Tagged F2/POLE Factor");
-   grph2->GetYaxis()->CenterTitle();
-   grph2 ->SetMarkerStyle(7);
-   grph2 -> Draw("APL");
-   grph2 ->SetTitle("F2/POLE vs t'");
+   TMultiGraph * mgc = new TMultiGraph();
+
+   mgc -> SetTitle("Cross Sections");
+   mgc -> Add(grph1);
+   mgc -> Add(grph2);
+   mgc -> Add(grph3);
+   mgc -> Draw("APL");
+
+ 
+   mgc->GetXaxis()->SetTitle("t' (GEV^2)");
+   mgc->GetXaxis()->CenterTitle();
+   mgc->GetYaxis()->SetTitle("Cross Section (NB/GEV^4)");
+   mgc->GetYaxis()->CenterTitle();
+
+   c1->BuildLegend();
+   c1->Update();
+
+   TCanvas *c2 = new TCanvas("c2", "Ratios", 700, 700);
+   c2-> cd();
+   TGraph * ratio1 = new TGraph(size, &TP_vec[0], &FSIG_ratio_2_3[0]);
+   ratio1 -> SetMarkerStyle(21);
+   ratio1 -> SetMarkerColor(2);
+   ratio1 -> SetTitle("1.1 * F2N / Nominal");
+
+   TGraph * ratio2 = new TGraph(size, &TP_vec[0], &FSIG_ratio_4_3[0]);
+   ratio2 -> SetMarkerStyle(21);
+   ratio2 -> SetMarkerColor(3);
+   ratio2 -> SetTitle("0.9 * F2N / Nominal");
+
+   TMultiGraph * mgr = new TMultiGraph();
+   mgr -> SetTitle("Ratios");
+   mgr -> Add(ratio1);
+   mgr -> Add(ratio2);
+   mgr -> Draw("APL");
+   c2-> BuildLegend();
+   cout << "0.9 / Nom is " << FSIG_ratio_2_3[0] << endl;
+   cout << "1.1 / Nom is " << FSIG_ratio_4_3[0] << endl;
 
 
-   c1 -> Update();
-   c2 -> Update();
 }
 
 int multi_tag_reader(bool print=false){
   //define values we will read
-    Float_t TP;
-    Float_t PR2;
-    Float_t PTR;
-    Float_t FSIG;
-    Float_t UNUM;
-    Float_t F2_SPOL;
-    
-    TFile * root_files[3];
-    for(int idx = 0; idx<3; idx++){
+    Float_t TP[3];
+    Float_t PR2[3];
+    Float_t PTR[3];
+    Float_t FSIG[3];
+    Float_t UNUM[3];
+    Float_t F2_SPOL[3];
 
-        TFile * root_file[idx] = 0;
-        TTree *trees[3] = {new TTree("T2", "tag_data2_tree"), 
-                           new TTree("T3", "tag_data3_tree"),
-                           new TTree("T4", "tag_data4_tree")}
-                
+    vector<Float_t> TP_vec;
+    vector<Float_t> FSIG2_vec;
+    vector<Float_t> FSIG3_vec;
+    vector<Float_t> FSIG4_vec;
+    vector<Float_t> FSIG_ratio_2_3;
+    vector<Float_t> FSIG_ratio_4_3;
 
-        string out_path = get_outfile_path(idx+2); //files indexed starting from 2
-        FILE * out = fopen(out_path.c_str(), "r"); //open data (have to reconvert to a char *)
-        //create root file in current directory
-        root_file = new TFile ("tag_data" + string(idx+2) + ".root", "RECREATE");
+    //open the 3 output files 
+    FILE * out[3]; 
+    for(int i = 0; i<3; i++){
+        int idx = i + 2; //files indexed starting from 2
+        // EVTP2.OUT is the 0.9 * F2N data, EVTP3.OUT is the nominal F2N data, 
+        // EVTP4.OUT is the 1.1 * F2N data
+        string out_path = get_outfile_path(idx);         
+         out[i] = fopen(out_path.c_str(), "r"); 
+         if (print) cout << "Opened File at " << out_path << endl;
+    }
         //make the tree and setup the branches
-        tree -> Branch("TP", &TP,"TP/F");
-        tree -> Branch("PR2", &PR2,"PR2/F");
-        tree -> Branch("PTR", &PTR,"PTR/F");
-        tree -> Branch("FSIG", &FSIG,"FSIG/F");
-        tree -> Branch("UNUM", &UNUM,"UNUM/F");
-        tree -> Branch("F2_SPOL", &F2_SPOL,"F2_SPOL/F");
+    TTree *tree = new TTree("T", "tag_data_tree");
+    //set all the branches
+    for(int i = 0; i<3; i++){
+        int idx = i + 2; //files indexed starting from 2
 
-        if (print) cout << "Opened File at " << out_path << endl;
-        char line [80];
-        //start reading the file
-        if (print) cout << "Reading the file... " << endl;
-        char first_char;
-        while (fgets(line, 80, out)){
-            first_char = line[0];
-            if (first_char != '#' ){ //check that line isnt a comment
-                //read data and store in variables
-                sscanf(line, "%f %f %f %f %f %f", &TP, &PR2, &PTR, &FSIG, &UNUM, &F2_SPOL);
-                if (print) cout<<"Writing values: " <<TP<<" "<<PR2<<" ";
-                if (print) cout <<PTR<<" "<<FSIG<<" "<<UNUM<<" "<<F2_SPOL<<endl;
-                tree->Fill();
-            }
+       tree -> Branch(TString::Format("TP%i",idx), TP+i, 
+                      TString::Format("TP%i/F",idx));
+       tree -> Branch(TString::Format("PR2%i",idx), PR2+i, 
+                      TString::Format("PR2%i/F", idx));
+       tree -> Branch(TString::Format("PTR%i", idx), PTR+i,
+                      TString::Format("PTR%i/F",idx));
+       tree -> Branch(TString::Format("FSIG%i", idx), FSIG+i,
+                      TString::Format("FSIG%i/F", idx));
+       tree -> Branch(TString::Format("UNUM%i", idx), UNUM+i, 
+                      TString::Format("UNUM%i/F", idx));
+       tree -> Branch(TString::Format("F2_SPOL%i",idx), F2_SPOL+i,
+                      TString::Format("F2_SPOL%i/F", idx));
         }
-        if(print) {tree->Print();print_my_tree(tree);}
-        make_graph(tree);
-        tree->Write();
-        fclose(out);
-        if(print) cout << "Closed File" << endl;
-        delete root_file;
+       char line[3][80];
+       //start reading the files
+       if (print) cout << "Reading the files... " << endl;
+       char first_char;
+       while (fgets(line[0], 80, out[0]) && fgets(line[1], 80, out[1]) && 
+             fgets(line[2], 80, out[2])){
+           first_char = line[0][0]; //if a comment should be same for all files
+           if (first_char != '#' ){ //check that line isnt a comment
+               //read data and store in variables
+               for(int i=0; i<3; i++){
+                  sscanf(line[i], "%f %f %f %f %f %f", TP+i, PR2+i, PTR+i, FSIG+i, 
+                                                   UNUM+i, F2_SPOL+i);
+
+                  if (print) {
+                     cout<<"Writing values: " <<TP[i]<<" "<<PR2[i]<<" ";
+                     cout <<PTR[i]<<" "<<FSIG[i]<<" "<<UNUM[i]<<" ";
+                     cout<<F2_SPOL[i]<<endl;
+                  }
+               }
+                 if (FSIG[0] != 0){
+                     //put the values in the arrays too
+                    
+                     TP_vec.push_back(TMath::Abs(TP[0]));
+                     FSIG2_vec.push_back(FSIG[0]);
+                     FSIG3_vec.push_back(FSIG[1]);
+                     FSIG4_vec.push_back(FSIG[2]);
+                     FSIG_ratio_2_3.push_back(FSIG[0]/FSIG[1]);
+                     FSIG_ratio_4_3.push_back(FSIG[2]/FSIG[1]);
+                  }
+               tree->Fill();
+
+          }
+       }
+        
+        
+   //print_my_tree(tree);
+   make_graphs(TP_vec, FSIG2_vec, FSIG3_vec, FSIG4_vec, FSIG_ratio_2_3, FSIG_ratio_4_3);
+   //write the tree to a root file 
+   char * file_name_str = "tag_data_multi.root";
+   TFile * root_file = 0;
+   root_file = new TFile (file_name_str, "RECREATE");
+   tree->Write();
+   for (int i=0; i<3; i++){
+      fclose(out[i]);}
+   if(print) cout << "Closed Files" << endl;
+   delete root_file;
+ 
     return 1;
 }
+
+

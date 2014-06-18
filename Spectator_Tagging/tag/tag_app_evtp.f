@@ -45,7 +45,8 @@ C
 C
 
       DO 88 I = 2, 4, 1
-         SCLING = 1.0 + (3.0 - I)/10.0
+         SCLRTO = 0.1
+         SCLING = 1.0 + (3.0 - I)*SCLRTO
 C        ...FREE NUCLEON STRUCTURE FUNCTION (INPUT MODEL)
 C
           CALL TAGFN(F2N, X, QQ, IPN, SCLING)
