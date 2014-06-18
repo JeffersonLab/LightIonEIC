@@ -114,4 +114,12 @@ CONTENT
                               | EVTP.IN and EVTP.OUT
 
 
+   *Addition by Oz Amram 6/18/14
+   
+   There is now a bash script to compile link and run using gfortran compiler.
+   Simply call it with:
+
+   bash make_script.sh
+
+
 ----------------------------------------------------------------------

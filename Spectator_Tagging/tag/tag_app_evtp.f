@@ -13,6 +13,8 @@ C
       PARAMETER (PI = 0.31415 92653 58979 D+01)
       PARAMETER (UN = 0.939D0, ED = 0.00222, UD = 2*UN - ED)
 C
+
+C     Create 3 different output files for the 3 different values used of F2N
       OPEN(1, FILE = 'EVTP.IN',   STATUS = 'OLD')
       OPEN(2, FILE = 'EVTP2.OUT',  STATUS = 'OLD')
       OPEN(3, FILE = 'EVTP3.OUT', STATUS = 'OLD')
@@ -43,17 +45,21 @@ C     ...RESIDUE OF SPECTRAL FUNCTION
 C
       CALL TAGRES(RES, ALR)
 C
+C     Run the simulation 3 times while scaling F2N by different amounts
 
       DO 88 I = 2, 4, 1
+
+C        Scaling F2N by 0.9, 1.0 then 1.1
          SCLRTO = 0.1
          SCLING = 1.0 + (3.0 - I)*SCLRTO
+
+
 C        ...FREE NUCLEON STRUCTURE FUNCTION (INPUT MODEL)
 C
           CALL TAGFN(F2N, X, QQ, IPN, SCLING)
 C
 C         ...WRITE OUTPUT FILE HEADER
 C
-C         Want 0.9, 1.0 and 1.1 times F2N
 
           
           WRITE(I, 91000) 'OUTPUT EVTP'

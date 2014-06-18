@@ -11,6 +11,7 @@ C     INPUT:
 C     X     X VARIABLE FOR NUCLEON
 C     QQ    Q2 (GEV**2)
 C     IPN   SWITCH: 1  PROTON, 2  NEUTRON
+C     SCLING Scaling factor to vary F2N. 1 if no scaling desired.
 C
 C     OUTPUT:
 C     F2    NUCLEON STRUCTURE FUNCTION F2
