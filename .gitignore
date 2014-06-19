@@ -1,7 +1,10 @@
 #### Specific Files##
-*.swp #vim swap files
-*.OUT #generated data
-*.root #root generated data
+#vim swap files
+#generated data
+#root generated data
+*.swp 
+*.OUT 
+*.root
 
 #Compiled source #
 ###################
