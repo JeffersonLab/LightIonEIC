@@ -12,12 +12,12 @@ using namespace std;
 
 string get_outfile_path(){
     // returns the path to the EVTP.OUT file
-    // ONLY WORKS IF EVTP.OUT is in ../tag from this file
+    // ONLY WORKS IF EVTP.OUT is located at ../christians_model/EVTP.OUT
     char cur_path[FILENAME_MAX];
     getcwd(cur_path, FILENAME_MAX);
     string str_path = string(cur_path);
     unsigned end_dir = str_path.find_last_of("/\\");
-    string outfile_path = str_path.substr(0,end_dir) + "/tag/EVTP.OUT";
+    string outfile_path = str_path.substr(0,end_dir) + "/christians_model/EVTP.OUT";
     //cout <<  outfile_path << endl;
     return outfile_path;
 }
@@ -109,7 +109,7 @@ void make_graph(const TTree *tree){
    c2 -> Update();
 }
 
-int tag_reader(bool print=false){
+int c_model_reader(bool print=false){
   //define values we will read
     Float_t TP;
     Float_t PR2;
@@ -123,7 +123,7 @@ int tag_reader(bool print=false){
     string out_path = get_outfile_path();
     FILE * out = fopen(out_path.c_str(), "r"); //open data (have to reconvert to a char *)
     //create root file in current directory
-    root_file = new TFile ("tag_data.root", "RECREATE");
+    root_file = new TFile ("c_model_data.root", "RECREATE");
     //make the tree and setup the branches
     TTree *tree = new TTree("T", "tag_data_tree");
     tree -> Branch("TP", &TP,"TP/F");

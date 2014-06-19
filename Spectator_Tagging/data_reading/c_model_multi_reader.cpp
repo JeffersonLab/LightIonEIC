@@ -30,7 +30,7 @@ string get_outfile_path(int index){
     getcwd(cur_path, FILENAME_MAX);
     string str_path = string(cur_path);
     unsigned end_dir = str_path.find_last_of("/\\");
-    string outfile_path = str_path.substr(0,end_dir) + "/tag/EVTP"+ int_to_string(index)
+    string outfile_path = str_path.substr(0,end_dir) + "/christians_model/EVTP"+ int_to_string(index)
     +".OUT";
     //cout <<  outfile_path << endl;
     return outfile_path;
@@ -156,7 +156,7 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec,
 
 }
 
-int multi_tag_reader(bool print=false){
+int c_model_multi_reader(bool print=false){
   //define values we will read
     Float_t TP[3];
     Float_t PR2[3];
@@ -239,7 +239,7 @@ int multi_tag_reader(bool print=false){
    //print_my_tree(tree);
    make_graphs(TP_vec, FSIG2_vec, FSIG3_vec, FSIG4_vec, FSIG_ratio_2_3, FSIG_ratio_4_3);
    //write the tree to a root file 
-   char * file_name_str = "tag_data_multi.root";
+   char * file_name_str = "c_model_multi_data.root";
    TFile * root_file = 0;
    root_file = new TFile (file_name_str, "RECREATE");
    tree->Write();
