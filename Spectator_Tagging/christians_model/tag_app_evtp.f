@@ -52,7 +52,7 @@ C     Run the simulation 3 times while scaling F2N by different amounts
 C        Scaling F2N by 0.9, 1.0 then 1.1
          SCLRTO = 0.1
          SCLING = 1.0 + (3.0 - I)*SCLRTO
-
+         PRINT *, SCLING
 
 C        ...FREE NUCLEON STRUCTURE FUNCTION (INPUT MODEL)
 C

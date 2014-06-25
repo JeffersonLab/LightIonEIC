@@ -8,7 +8,7 @@
 *        INPUTS
 *        Se    - invariant energy square of e and d system (k_e + p_d)^2
 *        Sq    - invariant energy square of q and d system  (q + p_d)^2
-*        q2    - Q2 (17.5)                                                  
+*        q2    - Q2 
 *        q0    - transfered energy
 *        alpha_r =  2*(E_r - p_rz)/(E_d - p_dz) 
 *        E_r - energy of recoil particle
@@ -47,49 +47,51 @@
 * Initialization
 *********************************	
         icase = 0
-        call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,x,s,si,
+
+        call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,scaling,x,s,si,
      &        Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1n,f2n,sun,icase,lc,lbj)
 
-        x = 0.0
-
-******************************************
+************************************
 ******* SETTING UP OUTPUT TO FILE ********
-*****************************************
-        OPEN(1, FILE= 'MISAK_DATA.OUT', STATUS = 'OLD')
-91000   FORMAT('#', A)
-90000   FORMAT(1(1X, F7.4), 6(1X, E10.4))
-        
-        WRITE(1, 91000) 'OUTPUT OF MISAK MODEL'
-        WRITE(1, 91000) 
-     *  'COL1  p_rt- transverse momentum of recoil nucleon vs q'
-        WRITE(1, 91000) 
-     * 'COL2 si-integrated cross section by recoil nucleons
-     *azimuthal angle'
-        WRITE(1, 91000) 'COL3 x - Bjorken x'
-        WRITE(1, 91000) 'COL4 f2d - Structure function of deuteron'
-
+***********************************
+           OPEN(1, FILE= 'MISAK_DATA_1.OUT', STATUS = 'OLD')
+           OPEN(2, FILE= 'MISAK_DATA_2.OUT', STATUS = 'OLD')
+           OPEN(3, FILE= 'MISAK_DATA_3.OUT', STATUS = 'OLD')
+91000      FORMAT('#', A)
+91001      FORMAT('#', T3, A30, I1)
+91002      FORMAT('#', T3, A8, F10.2)
+90000      FORMAT(1(1X, F7.4), 6(1X, E10.4))
 
 *********************************
 * Input
 *********************************
-        ei   = 10.0
-        q2   =  2.0
-        q0   = 4.0
+
+***************************** NOTE ****************************************
+* There were issues using the edenx function with inputs from the lab frame (ei = 5.0, pd = 100),
+* so the inputs were lorentz transformed to the deuteron rest frame so it was the same as a fixed 
+* target experiment.
+***************************************************************************
+
+
+        ei   = 533.2
+        q2   =  17.5
+        x = 0.03
+        q0   = q2/2/dm/x
         qv   = sqrt(q2 + q0**2)
         epr  = ei - q0
         th_e = 2.0*asin(sqrt(q2/4.0/ei/epr))
         cs_the_qe = (ei - epr*cos(th_e))/qv
         
         
-        pd   = 20.0
+        pd   = 0.0
         ed =  sqrt(dm**2 + pd**2)
 
         se = 2.0*ei*(ed + pd) + dm**2
         sq = -q2 + 2.0*q0*ed + 2.0*qv*cs_the_qe*pd + dm**2
 
-        ktr  = -1
-        alpha_r = 1.2
-        p_rt = 0.185
+        ktr  = 1
+        alpha_r = 1.0
+        p_rt = 0.01
 
         icase = 1
         lc = 1
@@ -100,21 +102,42 @@
 **** LOOP THROUGH PROTON MOMENTUMS **************
 *******************************************
         NBIN = 20
-        p_rt_min = 0.185
-        p_rt_max = 0.67
-        DO 100 I = 0, NBIN
+        p_rt_min = 0.01
+        p_rt_max = 0.3
+        scaling = 0.9
+        DO 99  I = 1, 3
+******************************************
+******* CREATING FILE HEADER ********
+*****************************************
+
+           call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,scaling, x,s,si,
+     &          Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
+           WRITE(I, 91001) 'OUTPUT OF MISAK MODEL. NUMBER:', I
+           WRITE(I, 91002) 'F2N is', f2eff
+           WRITE(I, 91000) 
+     *     'COL1  p_rt- transverse momentum of recoil nucleon vs q'
+           WRITE(I, 91000) 
+     *     'COL2 si-integrated cross section by recoil nucleons
+     *azimuthal angle'
+
+
+**********************************************
+********* DO Calculations **********************
+**********************************************
+           p_rt = p_rt_min
+           DO 100 J = 0, NBIN
         
-           p_rt = p_rt + (p_rt_min - p_rt_max)/NBIN 
-           call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,x,s,si,
+              call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,scaling, x,s,si,
      &          Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
            
-           IF (.NOT.(s.EQ.0)) THEN
-               PRINT *, "S is actually ", s
-           ENDIF
-           WRITE(1, 90000) p_rt, si, x, f2d 
+              IF (.NOT.(s.EQ.0)) THEN
+                 PRINT *, "S is actually ", s
+              ENDIF
+              WRITE(I, 90000) p_rt, si
+              p_rt = p_rt + (p_rt_max - p_rt_min)/NBIN 
 
 100     CONTINUE
-
+99      scaling = scaling + 0.1
 
 
         end
@@ -123,11 +146,11 @@
 **************************************************************
 
 
-      subroutine edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,x,s,si,
+      subroutine edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,scaling, x,s,si,
      &       Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
 
 	implicit none
-	real aem,pi,pm,pmp,pmn,dm,eb
+	real aem,pi,pm,pmp,pmn,dm,eb,scaling
 	real ei,er,q0,qv,q2,x,y,sin_the_2,the
 	real pr,thr,phir,Tr,e_r,al_r,pt_r,wn2,pr_z,p_rz,p_rt
 	real term0,term,a2,a3,asi,s_a,s_b
@@ -175,7 +198,7 @@
 
 *         print *, se,sq,q2,q0,ktr,alpha_r,p_rt
 
-*************************************************
+***********************************************
 *        Recoil nucleon kinematics
 *************************************************
         p_rz = (pm**2*(1.0-alpha_r**2) + p_rt**2)/2.0/pm/alpha_r
@@ -211,9 +234,10 @@
 ****************************************************************************	
         phir = 0.0
 	call 
-     &d_structure_func(ktr,q2,x,alpha_r,p_rt,phir,Tr,
+     &d_structure_func(ktr,q2,x,alpha_r,p_rt,phir,Tr, scaling, 
      &Fd_L,Fd_T,Fd_TL,Fd_TT,
      &F2d_si,F1d_si,f1eff,f2eff,sun,icase,lc,lbj)
+     
 
 
 
@@ -221,11 +245,9 @@
 	s_b  = F2d_si !nor + asi*F1d_si
 *	s_b  = Fd_L + a2*Fd_T
 	f2d  = F2d_si
-
         s = 0.0
 *	s    = term* s_a
 	si   = term* s_b
-
 *        print *,"si",term,s_b,si
 *        print *, "fd_l",fd_tl
 	return
@@ -233,7 +255,7 @@
 
 
 	subroutine 
-     &  d_structure_func(its,q2,x,als,pt,phir,Tr,
+     &  d_structure_func(its,q2,x,als,pt,phir,Tr, scaling,
      &                  Fd_L,Fd_T,Fd_TL,Fd_TT,
      &                  F2d_si,F1d_si,f1eff,f2eff,sun,icon,lc,lbj)
 ********************************************************************************************
@@ -246,6 +268,7 @@
 *  pt     - transverse momentum of the recoil nucleon
 *  phit   - azimuthal angle of the recoil nucleon
 *  Tr     - Kinetic energy of the recoil nucleon
+*  scaling- amount to scale f2n by
 *  Fd_L   - FL  structure function of the deuteron
 *  Fd_T   - FT  structure function of the deuteron
 *  Fd_TL  - FTL structure function of the deuteron
@@ -263,7 +286,7 @@
 * FIU, TUN, Miami
 **********************************************************************************************
 	implicit none
-	real aem,pi,pm,pmp,pmn,dm,eb
+	real aem,pi,pm,pmp,pmn,dm,eb, scaling
 	real q2,q0,qv,x,sin_del,cos_del,alq
 	real als,pt,phir,Tr,psz,ps,es,al,pr,thr
 	real pq,pplus,qplus,xtil,starm2,w2n,q0_off
@@ -326,7 +349,7 @@
 * calculation of effective structure functions of nucleons
 *___________________________________________________________
 	itn   = -its
-	call struct_func_nucleon(itn,xtil,q2,al,pt,F1eff,F2eff)
+	call struct_func_nucleon(itn,xtil,q2,al,pt,scaling, F1eff,F2eff)
 *	f2eff = 1.0
 *	print *,"xof",xtil,F2eff
 *===========================================================
@@ -394,9 +417,9 @@
 
 
 
-	subroutine struct_func_nucleon(itn,x,q2,al,pt,F1,F2)
+	subroutine struct_func_nucleon(itn,x,q2,al,pt,scaling, F1,F2)
 	implicit none
-	real pi,pm,pmp,pmn,dm,eb
+	real pi,pm,pmp,pmn,dm,eb, scaling
 	real q0,q2,x,w2
 	real al,pt
 	integer itn
@@ -405,7 +428,7 @@
 	q0 = q2/(2.0*pm*x)
 	w2 = pm**2 + 2.0*pm*q0 - q2 
 	if(itn.eq.-1)then
-	call struct_bodek_n(q0,q2,w2,F2a,F1a)
+	call struct_bodek_n(q0,q2,w2,scaling, F2a,F1a)
 *	f2a = 1.
 	elseif(itn.eq.1)then
 	call struct_bodek_p(q0,q2,w2,F2a,F1a)
@@ -1294,7 +1317,7 @@ C---------------------------------
 
 
 C..................................             
-      subroutine struct_bodek_n(gp0,gp2,fm2,f2,f1)         
+      subroutine struct_bodek_n(gp0,gp2, fm2, scaling, f2,f1)         
 *******************************************************
 * Structure function f2, f2 of neutrons within Bodek  *
 * parameterization                                    *
@@ -1309,8 +1332,9 @@ C..................................
       WI=SQRT(FM2)                                                      
       W2NT =GP_N(GP0,GP2)*B(WI,GP2)/GP0       
       W1NT = (1.+GP0**2/GP2)/(1.+R)*W2NT
-      f2  = gp0 * w2NT                           
+      f2  = scaling * gp0 * w2NT                           
       f1  = pm  * w1NT       
+*     IF(scaling.EQ.1.0) print *, f2
 *      write(15,*)"bodek",ths0,f1,f2,gp0,gp2,wi
       RETURN                                                            
       END                                                               
