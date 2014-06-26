@@ -5,6 +5,8 @@
 *.swp 
 *.OUT 
 *.root
+*.f.swp
+*.OUT.swp
 
 #Compiled source #
 ###################
