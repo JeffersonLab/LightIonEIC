@@ -101,19 +101,19 @@ C
 C    ...TPRIME VALUES AT BIN END AND CENTER
 C
              TPLO = -(IBIN - 1)*TPBIN
-             TP   = -(IBIN - .5D0)*TPBIN
+             TP   = -(IBIN)*TPBIN
 C
-             IF (TPLO.GT.TP1) THEN
+C             IF (TPLO.GT.TP1) THEN
 C
 C     ...BIN PARTLY OUTSIDE PHYSICAL REGION: SKIP
 C
-                PR2  = 0.D0
-                PTR  = 0.D0
-                FSIG = 0.D0
-                UNUM = 0.D0
-                S    = 0.D0
+C               PR2  = 0.D0
+C               PTR  = 0.D0
+C               FSIG = 0.D0
+C               UNUM = 0.D0
+C               S    = 0.D0
 C
-         ELSE
+c        ELSE
 C
 C    ...BIN INSIDE PHYSICAL REGION: CALCULATE CROSS SECTION
 C       AND NUMBER OF EVENTS
@@ -139,7 +139,7 @@ C     ...SPECTRAL FUNCTION AND POLE PART
 C
                 CALL TAGSP(S, ALR, PTR)
 C
-             ENDIF
+C            ENDIF
 C
              SPOL = RES/(-TP)**2 
 C

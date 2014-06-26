@@ -103,15 +103,15 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec,
    //all the data has the same TP values so we use the same
    int size = TP_vec.size();
    TGraph * grph1 = new TGraph(size, &TP_vec[0], &FSIG2_vec[0]);
-   grph1 -> SetMarkerStyle(21);
+   grph1 -> SetMarkerStyle(20);
    grph1 -> SetMarkerColor(2);
    grph1 -> SetTitle("1.1 * F2N");
    TGraph * grph2 = new TGraph(size, &TP_vec[0], &FSIG3_vec[0]);
-   grph2 -> SetMarkerStyle(21);
+   grph2 -> SetMarkerStyle(20);
    grph2 -> SetMarkerColor(3);  
    grph2 -> SetTitle("Nominal F2N");
    TGraph * grph3 = new TGraph(size, &TP_vec[0], &FSIG4_vec[0]);
-   grph3 -> SetMarkerStyle(21);
+   grph3 -> SetMarkerStyle(20);
    grph3 -> SetMarkerColor(4);
    grph3 -> SetTitle("0.9 * F2N");
 
@@ -135,12 +135,12 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec,
    TCanvas *c2 = new TCanvas("c2", "Ratios", 700, 700);
    c2-> cd();
    TGraph * ratio1 = new TGraph(size, &TP_vec[0], &FSIG_ratio_2_3[0]);
-   ratio1 -> SetMarkerStyle(21);
+   ratio1 -> SetMarkerStyle(20);
    ratio1 -> SetMarkerColor(2);
    ratio1 -> SetTitle("1.1 * F2N / Nominal");
 
    TGraph * ratio2 = new TGraph(size, &TP_vec[0], &FSIG_ratio_4_3[0]);
-   ratio2 -> SetMarkerStyle(21);
+   ratio2 -> SetMarkerStyle(20);
    ratio2 -> SetMarkerColor(3);
    ratio2 -> SetTitle("0.9 * F2N / Nominal");
 
@@ -214,6 +214,7 @@ int c_model_multi_reader(bool print=false){
                   sscanf(line[i], "%f %f %f %f %f %f", TP+i, PR2+i, PTR+i, FSIG+i, 
                                                    UNUM+i, F2_SPOL+i);
 
+                  TP[i] = TMath::Abs(TP[i]); //c_model outputs a negative t'
                   if (print) {
                      cout<<"Writing values: " <<TP[i]<<" "<<PR2[i]<<" ";
                      cout <<PTR[i]<<" "<<FSIG[i]<<" "<<UNUM[i]<<" ";

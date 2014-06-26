@@ -106,21 +106,24 @@ void HallA_style() {
 
 void draw_graphs(TTree * c_tree, TTree * m_tree){
    HallA_style(); //make it pretty
+   int marker_style = 20;
    TCanvas *c1 = new TCanvas("c1", "Cross Sections", 700, 700);
    //make  vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
    pad1->SetLogy(); //make Y axis on log scale
    //all the data has the same prt values so we use the same
 
-   int c_size = c_tree -> Draw("FSIG2:PTR2", "PTR2 !=0", "goff");
+   int c_size = c_tree -> Draw("FSIG3:TP3", "PTR2 !=0", "goff");
+   //the 3 index is the nominal F2N for christians_model
    TGraph * c_grph = new TGraph(c_size, c_tree->GetV2(), c_tree->GetV1());
-   c_grph -> SetMarkerStyle(21);
+   c_grph -> SetMarkerStyle(marker_style);
    c_grph -> SetMarkerColor(2);
    c_grph -> SetTitle("Christian's Model");
    
-   int m_size = m_tree -> Draw("si2:prt2", "", "goff");
+   int m_size = m_tree -> Draw("si2:TP2", "", "goff");
+   // the 2 index is the nominal F2N for misaks model
    TGraph * m_grph = new TGraph(m_size, m_tree->GetV2(), m_tree->GetV1());
-   m_grph -> SetMarkerStyle(21);
+   m_grph -> SetMarkerStyle(marker_style);
    m_grph -> SetMarkerColor(3);  
    m_grph -> SetTitle("Misak's Model");
 
@@ -132,15 +135,36 @@ void draw_graphs(TTree * c_tree, TTree * m_tree){
    mgc -> Draw("APL");
 
  
-   mgc->GetXaxis()->SetTitle("Proton Transverse Recoil Momentum (prt)");
+   mgc->GetXaxis()->SetTitle("t' (GEV/C)");
    mgc->GetXaxis()->CenterTitle();
-   mgc->GetYaxis()->SetTitle("Integrated Cross Section");
+   mgc->GetYaxis()->SetTitle("Cross Section (nB/GEV**4)");
    mgc->GetYaxis()->CenterTitle();
 
    c1->BuildLegend();
    c1->Update();
 
+   TCanvas * c2 = new TCanvas("c2", "Ratio", 700, 700);
+   c2 -> cd();
+   const Double_t * tp_vals = c_tree ->GetV2();
+   const Double_t * c_vals = c_tree->GetV1();
+   const Double_t * m_vals = m_tree->GetV1();
+   //compute ratios
+   vector<Double_t> ratio;
+   for(int i = 0; i <200; i++){
+        ratio.push_back(m_vals[i]/c_vals[i]);
+   }
+    
+   TGraph * r_grph = new TGraph(m_size, m_tree->GetV2(), &ratio[0]);
 
+   r_grph -> SetMarkerStyle(marker_style);
+   r_grph -> SetMarkerColor(4);
+   r_grph -> SetTitle("Model Ratios");
+   r_grph ->Draw("APL");
+   r_grph->GetXaxis()->SetTitle("t' (GEV/C)");
+   r_grph->GetXaxis()->CenterTitle();
+   r_grph->GetYaxis()->SetTitle("Ratio: Misak / Christian");
+   r_grph->GetYaxis()->CenterTitle();
+   r_grph->GetYaxis() -> SetTitleOffset(1.8);
 
 }
 

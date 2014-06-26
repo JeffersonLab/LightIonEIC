@@ -42,6 +42,7 @@
 ***************************************************************************     
       program test
         common/par/pi,pm,pmp,pmn,dm,eb
+       real TP 
         dm = 1.875
 *********************************
 * Initialization
@@ -96,15 +97,20 @@
         icase = 1
         lc = 1
         lbj = 1
+
+
+
+        NBIN = 200 !Number of events
+        TP_min = 0.0 !Starting value of t'
+        TP_max = 1.0 ! End value of t'
+        scaling = 0.9 !starting F2N scaling amount
+        scaling_inc = 0.1 !amount to change scaling by in each loop
+        TP_bin = (TP_max - TP_min)/NBIN !Amount tp incremeants by
 *        print *,"*", se,sq,q2,q0,ktr,alpha_r,p_rt,x
         
 *******************************************
-**** LOOP THROUGH PROTON MOMENTUMS **************
+**** LOOP THROUGH DIFFERENT F2N SCALINGS **
 *******************************************
-        NBIN = 20
-        p_rt_min = 0.01
-        p_rt_max = 0.3
-        scaling = 0.9
         DO 99  I = 1, 3
 ******************************************
 ******* CREATING FILE HEADER ********
@@ -114,38 +120,97 @@
      &          Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
            WRITE(I, 91001) 'OUTPUT OF MISAK MODEL. NUMBER:', I
            WRITE(I, 91002) 'F2N is', f2eff
+           WRITE(I, 91000) 'COL1 tp - momentum of proton in nucleus'
            WRITE(I, 91000) 
-     *     'COL1  p_rt- transverse momentum of recoil nucleon vs q'
+     *     'COL2  p_rt- transverse momentum of recoil nucleon vs q'
            WRITE(I, 91000) 
-     *     'COL2 si-integrated cross section by recoil nucleons
+     *     'COL3 si-integrated cross section by recoil nucleons
      *azimuthal angle'
 
 
-**********************************************
-********* DO Calculations **********************
-**********************************************
-           p_rt = p_rt_min
-           DO 100 J = 0, NBIN
-        
+******************************************************
+********* LOOP THROUGH DIFFERENT PROTON MOMENTUMS ****
+******************************************************
+           TP = TP_min
+           DO 100 J = 1, NBIN
+              TP = J*TP_bin
+
+C    ...CALCULATE p_rt from tp (taken from christians code)
+
+              call tp_to_prt(-TP, p_rt) !christians code uses a negative tp
+
+C      RUN MAIN FUNCTION
+
               call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,scaling, x,s,si,
      &          Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
            
-              IF (.NOT.(s.EQ.0)) THEN
-                 PRINT *, "S is actually ", s
-              ENDIF
-              WRITE(I, 90000) p_rt, si
-              p_rt = p_rt + (p_rt_max - p_rt_min)/NBIN 
+C       OUTPUT THE VALUES
+              WRITE(I, 90000) TP,p_rt,si
 
 100     CONTINUE
-99      scaling = scaling + 0.1
+99      scaling = scaling + scaling_inc
 
 
         end
 
 
 **************************************************************
+********* Convert TP value to p_rt **************************
+************************************************************
+*
+* INPUT: TP - Proton momentum in nucleus
+* OUTPUT: p_rt - transverse recoil momentum 
+*
+*
+* Code taken from christian weiss's model
+* See christians_model/tag_app_evtp.f at line 120
 
 
+      subroutine tp_to_prt(TP, p_rt)
+        real TP, p_rt
+        real TP0, PR2,ER, PRZ
+        real ALR
+
+        PARAMETER (UN = 0.939D0, ED = 0.00222, UD = 2*UN - ED)
+        ALR = 1.0
+
+        CALL TPMIN(TP0, 1.0000, 0)
+
+         PR2 = (TP0 - TP)/2
+         ER  = SQRT(PR2 + UN**2)
+         PRZ = ALR*UD/2 - ER
+         p_rt = SQRT(PR2 - PRZ**2)
+
+        end 
+
+
+      SUBROUTINE TPMIN(TP, ALR, ILIM)
+C
+C         KINEMATIC LIMIT OF TPRIME
+C
+C         ILIM = 0:  ABSOLUTE LIMIT, CORRESPONDS TO ALPHAR = 2*MN/MD
+C                1:  LIMIT FOR FIXED ALPHAR
+C
+C         TP IS THE TRUE (NEGATIVE) VALUE OF TPRIME
+
+C         Also taken from christians_model/tag_app_evtp.f, at line 155
+C
+          real ED, UN, UD
+          real TP, ALR
+          integer ILIM
+C
+          PARAMETER (UN = 0.939D0, ED = 0.00222, UD = 2*UN - ED)
+C
+          TP = -2*ED*UN + ED**2/2.
+          IF (ILIM.EQ.1) TP = TP - 2*(ALR*UD/4. - UN**2/ALR/UD)**2
+C
+      END
+      
+
+
+***********************************************************
+***************************** MAIN FUNTION  ***************
+************************************************************
       subroutine edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,scaling, x,s,si,
      &       Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
 

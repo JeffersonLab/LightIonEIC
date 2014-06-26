@@ -93,7 +93,7 @@ void HallA_style() {
 
 
 
-void make_graphs(vector<Float_t> prt_vec,  vector<Float_t> si1_vec, 
+void make_graphs(vector<Float_t> tp_vec,  vector<Float_t> si1_vec, 
                  vector<Float_t> si2_vec,  vector<Float_t> si3_vec,
                  vector<Float_t> si_ratio_1_2, vector<Float_t> si_ratio_3_2){
    HallA_style(); //make it pretty
@@ -102,17 +102,17 @@ void make_graphs(vector<Float_t> prt_vec,  vector<Float_t> si1_vec,
    TVirtualPad  *pad1 = c1->cd();
    pad1->SetLogy(); //make Y axis on log scale
    //all the data has the same prt values so we use the same
-   int size = prt_vec.size();
-   TGraph * grph1 = new TGraph(size, &prt_vec[0], &si1_vec[0]);
-   grph1 -> SetMarkerStyle(21);
+   int size = tp_vec.size();
+   TGraph * grph1 = new TGraph(size, &tp_vec[0], &si1_vec[0]);
+   grph1 -> SetMarkerStyle(20);
    grph1 -> SetMarkerColor(2);
    grph1 -> SetTitle("0.9 * F2N");
-   TGraph * grph2 = new TGraph(size, &prt_vec[0], &si2_vec[0]);
-   grph2 -> SetMarkerStyle(21);
+   TGraph * grph2 = new TGraph(size, &tp_vec[0], &si2_vec[0]);
+   grph2 -> SetMarkerStyle(20);
    grph2 -> SetMarkerColor(3);  
    grph2 -> SetTitle("Nominal F2N");
-   TGraph * grph3 = new TGraph(size, &prt_vec[0], &si3_vec[0]);
-   grph3 -> SetMarkerStyle(21);
+   TGraph * grph3 = new TGraph(size, &tp_vec[0], &si3_vec[0]);
+   grph3 -> SetMarkerStyle(20);
    grph3 -> SetMarkerColor(4);
    grph3 -> SetTitle("1.1 * F2N");
 
@@ -135,13 +135,13 @@ void make_graphs(vector<Float_t> prt_vec,  vector<Float_t> si1_vec,
 
    TCanvas *c2 = new TCanvas("c2", "Ratios", 700, 700);
    c2-> cd();
-   TGraph * ratio1 = new TGraph(size, &prt_vec[0], &si_ratio_1_2[0]);
-   ratio1 -> SetMarkerStyle(21);
+   TGraph * ratio1 = new TGraph(size, &tp_vec[0], &si_ratio_1_2[0]);
+   ratio1 -> SetMarkerStyle(20);
    ratio1 -> SetMarkerColor(2);
    ratio1 -> SetTitle("0.9 * F2N / Nominal");
 
-   TGraph * ratio2 = new TGraph(size, &prt_vec[0], &si_ratio_3_2[0]);
-   ratio2 -> SetMarkerStyle(21);
+   TGraph * ratio2 = new TGraph(size, &tp_vec[0], &si_ratio_3_2[0]);
+   ratio2 -> SetMarkerStyle(20);
    ratio2 -> SetMarkerColor(3);
    ratio2 -> SetTitle("1.1 * F2N / Nominal");
 
@@ -217,12 +217,10 @@ int m_model_multi_reader(bool print=false){
            if (first_char != '#' ){ //check that line isnt a comment
                //read data and store in variables
                for(int i=0; i<3; i++){
-                  sscanf(line[i], "%f %f", prt+i, si+i);
-                  tp[i] = to_tp(prt[i]);
-//                  prt[i]+= 0.18;
+                  sscanf(line[i], "%f %f %f", tp+i, prt+i, si+i);
 
                   if (print) {
-                     cout<<"Writing values to "<< i<<": " <<prt[i]<<" "<< tp[i] << " ";
+                     cout<<"Writing values to "<< i<<": " <<tp[i]<<" "<< prt[i] << " ";
                      cout << si[i]<<" "<< endl;
                   }
                }
