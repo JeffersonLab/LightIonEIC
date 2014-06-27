@@ -110,6 +110,7 @@ void draw_graphs(TTree * c_tree, TTree * m_tree){
    TCanvas *c1 = new TCanvas("c1", "Cross Sections", 700, 700);
    //make  vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
+   pad1->SetLogx();
    pad1->SetLogy(); //make Y axis on log scale
    //all the data has the same prt values so we use the same
 
@@ -164,8 +165,8 @@ void draw_graphs(TTree * c_tree, TTree * m_tree){
    r_grph->GetXaxis()->CenterTitle();
    r_grph->GetYaxis()->SetTitle("Ratio: Misak / Christian");
    r_grph->GetYaxis()->CenterTitle();
-   r_grph->GetYaxis() -> SetTitleOffset(1.8);
 
+   c2->Update();
 }
 
 int c_and_m_comparison(bool print=false){
