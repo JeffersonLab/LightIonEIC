@@ -40,21 +40,22 @@ C
       READ(1, *) ALRBIN
       READ(1, *) TPBIN
       READ(1, *) NBIN
+      SCLINg = 1.0
 C
-C     ...KINEMATIC LIMIT IN TPRIME, ABSOLUTE AND FOR GIVEN ALPHAR
-C
-      CALL TPMIN(TP0, 1.D0, 0)
-      CALL TPMIN(TP1,  ALR, 1)
-C
-C     ...RESIDUE OF SPECTRAL FUNCTION
-C
-      CALL TAGRES(RES, ALR)
 C
 C     Run the simulation 9 times while scaling x by different amounts
       X_INC = 0.1
       DO 88 I = 1, 9, 1
           X = I * X_INC
 
+C     ...KINEMATIC LIMIT IN TPRIME, ABSOLUTE AND FOR GIVEN ALPHAR
+C
+          CALL TPMIN(TP0, 1.D0, 0)
+          CALL TPMIN(TP1,  ALR, 1)
+C
+C     ...RESIDUE OF SPECTRAL FUNCTION
+C
+          CALL TAGRES(RES, ALR)
 C        ...FREE NUCLEON STRUCTURE FUNCTION (INPUT MODEL)
 C
           CALL TAGFN(F2N, X, QQ, IPN, SCLING)

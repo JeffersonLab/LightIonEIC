@@ -150,15 +150,21 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec,
 
 
 }
-
-int c_model_x_reader(bool print=false){
+bool get_lines(char line[9][80], FILE * out [9]){
+    bool is_done = true;
+    for (int i = 0; i <9; i++){
+        is_done = is_done && fgets(line[i], 80, out[i]);
+    }
+    return is_done;
+}
+int c_model_f2n_reader(bool print=false){
   //define values we will read
-    Float_t TP[3];
-    Float_t PR2[3];
-    Float_t PTR[3];
-    Float_t FSIG[3];
-    Float_t UNUM[3];
-    Float_t F2_SPOL[3];
+    Float_t TP[9];
+    Float_t PR2[9];
+    Float_t PTR[9];
+    Float_t FSIG[9];
+    Float_t UNUM[9];
+    Float_t F2_SPOL[9];
 
     vector<Float_t> TP_vec;
     vector<Float_t> FSIG2_vec;
@@ -168,9 +174,9 @@ int c_model_x_reader(bool print=false){
     vector<Float_t> FSIG_ratio_4_3;
 
     //open the 3 output files 
-    FILE * out[3]; 
-    for(int i = 0; i<3; i++){
-        int idx = i + 2; //files indexed starting from 2
+    FILE * out[9]; 
+    for(int i = 0; i<9; i++){
+        int idx = i + 1; //files indexed starting from 2
         // EVTP2.OUT is the 1.1 * F2N data, EVTP3.OUT is the nominal F2N data, 
         // EVTP4.OUT is the 0.9 * F2N data
         string out_path = get_outfile_path(idx);         
@@ -180,8 +186,8 @@ int c_model_x_reader(bool print=false){
         //make the tree and setup the branches
     TTree *tree = new TTree("T", "tag_data_tree");
     //set all the branches
-    for(int i = 0; i<3; i++){
-        int idx = i + 2; //files indexed starting from 2
+    for(int i = 0; i<9; i++){
+        int idx = i + 1; //files indexed starting from 1
 
        tree -> Branch(TString::Format("TP%i",idx), TP+i, 
                       TString::Format("TP%i/F",idx));
@@ -196,16 +202,15 @@ int c_model_x_reader(bool print=false){
        tree -> Branch(TString::Format("F2_SPOL%i",idx), F2_SPOL+i,
                       TString::Format("F2_SPOL%i/F", idx));
         }
-       char line[3][80];
+       char line[9][80];
        //start reading the files
        if (print) cout << "Reading the files... " << endl;
        char first_char;
-       while (fgets(line[0], 80, out[0]) && fgets(line[1], 80, out[1]) && 
-             fgets(line[2], 80, out[2])){
+       while (get_lines(line,out)){
            first_char = line[0][0]; //if a comment should be same for all files
            if (first_char != '#' ){ //check that line isnt a comment
                //read data and store in variables
-               for(int i=0; i<3; i++){
+               for(int i=0; i<9; i++){
                   sscanf(line[i], "%f %f %f %f %f %f", TP+i, PR2+i, PTR+i, FSIG+i, 
                                                    UNUM+i, F2_SPOL+i);
 
@@ -239,7 +244,7 @@ int c_model_x_reader(bool print=false){
    TFile * root_file = 0;
    root_file = new TFile (file_name_str, "RECREATE");
    tree->Write();
-   for (int i=0; i<3; i++){
+   for (int i=0; i<9; i++){
       fclose(out[i]);}
    if(print) cout << "Closed Files" << endl;
    delete root_file;

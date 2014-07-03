@@ -1,7 +1,7 @@
 //Written by Oz Amram 6/18/2014
 //
-//Reads data from  MISAK_DATA_1.OUT, MISAK_DATA_2.OUT, MISAK_DATA_3.OUT
-//They must be located in ../misak_model/
+//Reads data from  MISAK_DATA_1.OUT to MISAK_DATA_9.OUT
+//They must be located in ../misak_model/var_x
 //plots the data on the same graph as well as storing it in a root file
 
 #include <stdio.h>
@@ -102,15 +102,15 @@ void make_graphs(vector<Float_t> tp_vec,  vector<Float_t> si1_vec,
    TGraph * grph1 = new TGraph(size, &tp_vec[0], &si1_vec[0]);
    grph1 -> SetMarkerStyle(20);
    grph1 -> SetMarkerColor(2);
-   grph1 -> SetTitle("0.9 * F2N");
+   grph1 -> SetTitle("x = 0.1");
    TGraph * grph2 = new TGraph(size, &tp_vec[0], &si2_vec[0]);
    grph2 -> SetMarkerStyle(20);
    grph2 -> SetMarkerColor(3);  
-   grph2 -> SetTitle("Nominal F2N");
+   grph2 -> SetTitle("x = 0.2");
    TGraph * grph3 = new TGraph(size, &tp_vec[0], &si3_vec[0]);
    grph3 -> SetMarkerStyle(20);
    grph3 -> SetMarkerColor(4);
-   grph3 -> SetTitle("1.1 * F2N");
+   grph3 -> SetTitle("x = 0.3");
 
    TMultiGraph * mgc = new TMultiGraph();
 
@@ -158,18 +158,20 @@ void make_graphs(vector<Float_t> tp_vec,  vector<Float_t> si1_vec,
 
 
 }
-
-Float_t to_tp(Float_t prt){
-    //converts a prt (proton recoil transverse momentum) to tp (proton tranverse momentum
-    //in nucleus)
-    return prt;
+bool get_lines(char  line[9][100], FILE * out[9]){
+    bool not_end = true;
+    for (int i =0; i<9; i++){
+        not_end = not_end && fgets(line[i], 100, out[i]);
+    }
+    return not_end;
 }
 
-int m_model_x_reader(bool print=false){
+int m_model_x_reader(bool print = false){
+    cout << "WOW"<<endl;
   //define values we will read
-    Float_t prt[3];
-    Float_t tp[3];
-    Float_t si[3];
+    Float_t prt[9];
+    Float_t tp[9];
+    Float_t si[9];
 
     //set vectors for storing values for graphing
     // prt is same for every run so only use values from DATA_1.OUT
@@ -180,9 +182,9 @@ int m_model_x_reader(bool print=false){
     vector<Float_t> si_ratio_1_2;
     vector<Float_t> si_ratio_3_2;
 
-    //open the 3 output files 
-    FILE * out[3]; 
-    for(int i = 0; i<3; i++){
+    //open the 3 MISAK_DATA files 
+    FILE * out[9]; 
+    for(int i = 0; i<9; i++){
         int idx = i + 1; //files indexed starting from 2
         // DATA_1.OUT is the 0.9 * F2N data, DATA_2.OUT is the nominal F2N data, 
         // DATA_3.OUT is the 1.1 * F2N data
@@ -193,7 +195,7 @@ int m_model_x_reader(bool print=false){
         //make the tree and setup the branches
     TTree *tree = new TTree("T", "tag_data_tree");
     //set all the branches
-    for(int i = 0; i<3; i++){
+    for(int i = 0; i<9; i++){
         int idx = i + 1; //files indexed starting from 1
 
        tree -> Branch(TString::Format("prt%i",idx), prt+i, 
@@ -203,16 +205,15 @@ int m_model_x_reader(bool print=false){
        tree -> Branch(TString::Format("si%i",idx), si+i, 
                       TString::Format("si%i/F", idx));
        }
-       char line[3][100];
+       char line[9][100];
        //start reading the files
        if (print) cout << "Reading the files... " << endl;
        char first_char;
-       while (fgets(line[0], 100, out[0]) && fgets(line[1], 100, out[1]) && 
-             fgets(line[2], 100, out[2])){
+       while (get_lines(line, out)){
            first_char = line[0][0]; //if a comment should be same for all files
            if (first_char != '#' ){ //check that line isnt a comment
                //read data and store in variables
-               for(int i=0; i<3; i++){
+               for(int i=0; i<9; i++){
                   sscanf(line[i], "%f %f %f", tp+i, prt+i, si+i);
 
                   if (print) {
@@ -238,11 +239,11 @@ int m_model_x_reader(bool print=false){
    if(print) print_my_tree(tree);
    make_graphs(tp_vec, si1_vec, si2_vec, si3_vec, si_ratio_1_2, si_ratio_3_2);
    //write the tree to a root file 
-   char * file_name_str = "m_model_f2n_data.root";
+   char * file_name_str = "m_model_x_data.root";
    TFile * root_file = 0;
    root_file = new TFile (file_name_str, "RECREATE");
    tree->Write();
-   for (int i=0; i<3; i++){
+   for (int i=0; i<9; i++){
       fclose(out[i]);}
    if(print) cout << "Closed Files" << endl;
    delete root_file;

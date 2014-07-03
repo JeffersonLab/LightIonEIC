@@ -104,69 +104,101 @@ void HallA_style() {
 
 
 
-void draw_graphs(TTree * c_tree, TTree * m_tree){
+void draw_graphs(Float_t tp[200], Float_t c_cs[9][200], Float_t m_cs[9][200]){
    HallA_style(); //make it pretty
    int marker_style = 20;
-   TCanvas *c1 = new TCanvas("c1", "Cross Sections", 700, 700);
-   //make  vs cross section graph
-   TVirtualPad  *pad1 = c1->cd();
-   pad1->SetLogx();
-   pad1->SetLogy(); //make Y axis on log scale
-   //all the data has the same prt values so we use the same
+   TList can, mgcs, r_grphs, c_grphs, m_grphs;
+   int ngraphs = 5;
+   Float_t ratio[9][200];
+   for (int i = 0; i<ngraphs; i++){
+       int idx = i + 1;
+       cout << "making lists " << idx << endl;
+       can.Add(new TCanvas(TString::Format("c%i",idx), TString::Format("X = %3.2f", idx/10.0), 700, 700));
 
-   int c_size = c_tree -> Draw("FSIG3:TP3", "PTR2 !=0", "goff");
-   //the 3 index is the nominal F2N for christians_model
-   TGraph * c_grph = new TGraph(c_size, c_tree->GetV2(), c_tree->GetV1());
-   c_grph -> SetMarkerStyle(marker_style);
-   c_grph -> SetMarkerColor(2);
-   c_grph -> SetTitle("Christian's Model");
-   
-   int m_size = m_tree -> Draw("si2:TP2", "", "goff");
-   // the 2 index is the nominal F2N for misaks model
-   TGraph * m_grph = new TGraph(m_size, m_tree->GetV2(), m_tree->GetV1());
-   m_grph -> SetMarkerStyle(marker_style);
-   m_grph -> SetMarkerColor(3);  
-   m_grph -> SetTitle("Misak's Model");
+       mgcs.Add(new TMultiGraph());
+       c_grphs.Add(new TGraph(200, tp,c_cs[i]));
+       m_grphs.Add(new TGraph(200, tp, m_cs[i]));
 
-   TMultiGraph * mgc = new TMultiGraph();
-
-   mgc -> SetTitle("Model Comparison");
-   mgc -> Add(c_grph);
-   mgc -> Add(m_grph);
-   mgc -> Draw("APL");
-
- 
-   mgc->GetXaxis()->SetTitle("t' (GEV/C)");
-   mgc->GetXaxis()->CenterTitle();
-   mgc->GetYaxis()->SetTitle("Cross Section (nB/GEV**4)");
-   mgc->GetYaxis()->CenterTitle();
-
-   c1->BuildLegend();
-   c1->Update();
-
-   TCanvas * c2 = new TCanvas("c2", "Ratio", 700, 700);
-   c2 -> cd();
-   const Double_t * tp_vals = c_tree ->GetV2();
-   const Double_t * c_vals = c_tree->GetV1();
-   const Double_t * m_vals = m_tree->GetV1();
-   //compute ratios
-   vector<Double_t> ratio;
-   for(int i = 0; i <200; i++){
-        ratio.push_back(m_vals[i]/c_vals[i]);
+       //compute ratios
+       for(int j = 0; j <200; j++){
+            ratio[i][j] = m_cs[i][j]/c_cs[i][j];
+       }
+        
+       r_grphs.Add(new TGraph(200, tp, ratio[i]));
    }
-    
-   TGraph * r_grph = new TGraph(m_size, m_tree->GetV2(), &ratio[0]);
+   for (int i = 0; i<ngraphs ; i++){
+       //set correct values for this graph
+       int idx = i + 1;
+       TCanvas * c = can.At(i);
+       TMultiGraph * mgc = mgcs.At(i);
+       TGraph * r_grph = r_grphs.At(i);
+       TGraph * c_grph = c_grphs.At(i);
+       TGraph * m_grph = m_grphs.At(i);
 
-   r_grph -> SetMarkerStyle(marker_style);
-   r_grph -> SetMarkerColor(4);
-   r_grph -> SetTitle("Model Ratios");
-   r_grph ->Draw("APL");
-   r_grph->GetXaxis()->SetTitle("t' (GEV/C)");
-   r_grph->GetXaxis()->CenterTitle();
-   r_grph->GetYaxis()->SetTitle("Ratio: Misak / Christian");
-   r_grph->GetYaxis()->CenterTitle();
+       //make  vs cross section graph
+       c->Divide(1,2);
+       c->cd(1)->SetLogy();//make Y axis on log scale
+       mgc -> SetTitle(TString::Format("Model Comparison: X = %3.2f", idx/10.0));
+       //the 3 index is the nominal F2N for christians_model
+       c_grph -> SetMarkerStyle(marker_style);
+       c_grph -> SetMarkerColor(2);
+       c_grph -> SetTitle("Christian's Model");
+       
+       // the 2 index is the nominal F2N for misaks model
+       m_grph -> SetMarkerStyle(marker_style);
+       m_grph -> SetMarkerColor(3);  
+       m_grph -> SetTitle("Misak's Model");
 
-   c2->Update();
+
+
+       mgc -> Add(c_grph);
+       mgc -> Add(m_grph);
+       mgc -> Draw("APL");
+
+     
+       mgc ->GetXaxis()->SetTitle("t' (GEV/C)");
+       mgc ->GetXaxis()->CenterTitle();
+       mgc ->GetYaxis()->SetTitle("Cross Section (nB/GEV**4)");
+       mgc ->GetYaxis()->CenterTitle();
+
+  
+       c->cd(2);
+       r_grph -> SetMarkerStyle(marker_style);
+       r_grph -> SetMarkerColor(4);
+       r_grph -> SetTitle("Model Ratios");
+       r_grph ->Draw("APL");
+       r_grph->GetXaxis()->SetTitle("t' (GEV/C)");
+       r_grph->GetXaxis()->CenterTitle();
+       r_grph->GetYaxis()->SetTitle("Ratio: Misak / Christian");
+       r_grph->GetYaxis()->CenterTitle();
+
+       c->cd(1) -> BuildLegend();
+       c->cd(1) -> Update();
+    }
+}
+
+void get_data(TTree * c_tree, TTree * m_tree, Float_t c_cs[9][200], Float_t m_cs[9][200],
+              Float_t tp[200]){
+    Float_t tp_val, c_val[9], m_val[9];
+    c_tree->SetBranchAddress("TP1", &tp_val);
+    for(int i = 0; i <9; i ++){
+        int idx = i + 1;
+        c_tree->SetBranchAddress(TString::Format("FSIG%i", idx), &c_val[i]);
+        m_tree->SetBranchAddress(TString::Format("si%i", idx), &m_val[i]);
+    }
+    int entries = c_tree->GetEntries();
+    for(int j=0; j<entries; j++){
+         c_tree->GetEntry(j);
+         m_tree->GetEntry(j);
+         tp[j] = tp_val;
+         cout << tp[j] << " "<< m_cs[5][j] << endl;
+         for(int i=0; i<9; i++){
+            c_cs[i][j] = c_val[i];
+            m_cs[i][j] = m_val[i];
+
+      }
+    }
+    return;
 }
 
 int c_and_m_comparison(bool print=false){
@@ -174,9 +206,11 @@ int c_and_m_comparison(bool print=false){
     string m_path = get_m_path();
     TFile * c_file = new TFile(c_path.c_str());
     TFile * m_file = new TFile(m_path.c_str());
-    TTree * c_tree = (TTree*) c_file ->Get("T");
-    TTree * m_tree = (TTree*) m_file ->Get("T");
-    draw_graphs(c_tree, m_tree);
+    TTree * c_tree = c_file->Get("T");
+    TTree * m_tree = m_file->Get("T");
+    Float_t c_cs[9][200], m_cs[9][200], tp[200];
+    get_data(c_tree, m_tree, c_cs, m_cs, tp);
+    draw_graphs(tp, c_cs, m_cs);
   }
 
 
