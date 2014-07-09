@@ -66,7 +66,7 @@
            OPEN(109, FILE= 'MISAK_DATA_9.OUT', STATUS = 'REPLACE')
 91000      FORMAT('#', A)
 91001      FORMAT('#', T3, A30, I1)
-91002      FORMAT('#', T3, A8, F10.2)
+91002      FORMAT('#', T3, A8, 1(1X, E10.4))
 90000      FORMAT(1(1X, F7.4), 6(1X, E10.4))
 
         
@@ -422,7 +422,10 @@ C
 *	q0_off = (w2n-pm**2+q2)/(2.0*pm)
 *	            xtil = q2/(2.0*pm*q0_off)
 	if(lbj.eq.1)xtil = x/al
-	if(xtil.le.0.0.or.xtil.ge.1.0)return
+	if(xtil.le.0.0.or.xtil.ge.1.0) then
+        print *, "xtil is", xtil
+        return
+         endif
 
 *___________________________________________________________
 * calculation of effective structure functions of nucleons

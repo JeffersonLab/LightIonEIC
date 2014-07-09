@@ -15,26 +15,25 @@ C
 C
 
 C     Create 3 different output files for the 3 different values used of F2N
-      OPEN(1, FILE = 'EVTP.IN',   STATUS = 'OLD')
-      OPEN(2, FILE = 'EVTP2.OUT',  STATUS = 'OLD')
-      OPEN(3, FILE = 'EVTP3.OUT', STATUS = 'OLD')
-      OPEN(4, FILE = 'EVTP4.OUT', STATUS = 'OLD')
-      REWIND(1)
-      REWIND(2)
+      OPEN(101, FILE = 'EVTP.IN',   STATUS = 'OLD')
+      OPEN(1, FILE = 'EVTP1.OUT',  STATUS = 'OLD')
+      OPEN(2, FILE = 'EVTP2.OUT', STATUS = 'OLD')
+      OPEN(3, FILE = 'EVTP4.OUT', STATUS = 'OLD')
+      REWIND(101)
 C
 C     ...READ INPUT PARAMETERS (DOCUMENTATION SEE FILE)
 C
-      READ(1, *) ULUMI
-      READ(1, *) IPN
-      READ(1, *) SED
-      READ(1, *) X
-      READ(1, *) XBIN
-      READ(1, *) QQ
-      READ(1, *) QQBIN
-      READ(1, *) ALR
-      READ(1, *) ALRBIN
-      READ(1, *) TPBIN
-      READ(1, *) NBIN
+      READ(101, *) ULUMI
+      READ(101, *) IPN
+      READ(101, *) SED
+      READ(101, *) X
+      READ(101, *) XBIN
+      READ(101, *) QQ
+      READ(101, *) QQBIN
+      READ(101, *) ALR
+      READ(101, *) ALRBIN
+      READ(101, *) TPBIN
+      READ(101, *) NBIN
 C
 C     ...KINEMATIC LIMIT IN TPRIME, ABSOLUTE AND FOR GIVEN ALPHAR
 C
@@ -47,12 +46,11 @@ C
 C
 C     Run the simulation 3 times while scaling F2N by different amounts
 
-      DO 88 I = 2, 4, 1
+      DO 88 I = 1, 2
 
 C        Scaling F2N by 0.9, 1.0 then 1.1
          SCLRTO = 0.1
-         SCLING = 1.0 + (3.0 - I)*SCLRTO
-         PRINT *, SCLING
+         SCLING = 1.0 !+ (3.0 - I)*SCLRTO
 
 C        ...FREE NUCLEON STRUCTURE FUNCTION (INPUT MODEL)
 C
@@ -142,9 +140,18 @@ C
 C            ENDIF
 C
              SPOL = RES/(-TP)**2 
+
+             IF(I.EQ.1) THEN
+                DENOM = 1.0
+             ELSE IF (I.EQ.2) THEN
+                DENOM = SPOL
+             ENDIF
+             
+C            ANORM = FSIG/SPOL
+C            PRINT *, SPOL, ANORM, FSIG/ANORM
 C
 C        PRINT 90000,    TP, PR2, PTR, FSIG, UNUM, F2/SPOL
-             WRITE(I, 90000) TP, PR2, PTR, FSIG, UNUM, F2/SPOL
+             WRITE(I, 90000) TP, PR2, PTR, FSIG/DENOM, UNUM, F2/SPOL
 90000        FORMAT(1(1X, F7.4), 6(1X, E10.4))
 C
 10001 CONTINUE

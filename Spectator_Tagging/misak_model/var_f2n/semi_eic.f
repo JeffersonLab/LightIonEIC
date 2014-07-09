@@ -42,7 +42,7 @@
 ***************************************************************************     
       program test
         common/par/pi,pm,pmp,pmn,dm,eb
-       real TP 
+       real TP, SPOL, RES
         dm = 1.875
 *********************************
 * Initialization
@@ -103,15 +103,15 @@
         NBIN = 200 !Number of events
         TP_min = 0.0 !Starting value of t'
         TP_max = 1.0 ! End value of t'
-        scaling = 0.9 !starting F2N scaling amount
-        scaling_inc = 0.1 !amount to change scaling by in each loop
+        scaling = 1.0 !starting F2N scaling amount
+        scaling_inc = 0.0 !amount to change scaling by in each loop
         TP_bin = (TP_max - TP_min)/NBIN !Amount tp incremeants by
 *        print *,"*", se,sq,q2,q0,ktr,alpha_r,p_rt,x
         
 *******************************************
 **** LOOP THROUGH DIFFERENT F2N SCALINGS **
 *******************************************
-        DO 99  I = 1, 3
+        DO 99  I = 1, 2
 ******************************************
 ******* CREATING FILE HEADER ********
 *****************************************
@@ -143,9 +143,18 @@ C      RUN MAIN FUNCTION
 
               call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,scaling, x,s,si,
      &          Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
-           
+
+     
+
+        CALL TAGRES(RES, 1.0000)
+        IF(I.EQ.1) THEN
+           SPOL = 1.0
+        ELSE
+           SPOL = RES/(-TP)**2 
+        ENDIF
+        
 C       OUTPUT THE VALUES
-              WRITE(I, 90000) TP,p_rt,si
+              WRITE(I, 90000) TP,p_rt,si/SPOL
 
 100     CONTINUE
 99      scaling = scaling + scaling_inc
