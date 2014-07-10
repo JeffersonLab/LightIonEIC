@@ -18,7 +18,7 @@ C     Create 3 different output files for the 3 different values used of F2N
       OPEN(101, FILE = 'EVTP.IN',   STATUS = 'OLD')
       OPEN(1, FILE = 'EVTP1.OUT',  STATUS = 'OLD')
       OPEN(2, FILE = 'EVTP2.OUT', STATUS = 'OLD')
-      OPEN(3, FILE = 'EVTP4.OUT', STATUS = 'OLD')
+      OPEN(3, FILE = 'EVTP3.OUT', STATUS = 'OLD')
       REWIND(101)
 C
 C     ...READ INPUT PARAMETERS (DOCUMENTATION SEE FILE)
@@ -49,8 +49,9 @@ C     Run the simulation 3 times while scaling F2N by different amounts
       DO 88 I = 1, 2
 
 C        Scaling F2N by 0.9, 1.0 then 1.1
-         SCLRTO = 0.1
-         SCLING = 1.0 !+ (3.0 - I)*SCLRTO
+         SCLRTO = 0.3
+         SCLING = (1 - SCLRTO) + (I-1) * SCLRTO
+         print *, I, SCLING
 
 C        ...FREE NUCLEON STRUCTURE FUNCTION (INPUT MODEL)
 C
@@ -141,17 +142,12 @@ C            ENDIF
 C
              SPOL = RES/(-TP)**2 
 
-             IF(I.EQ.1) THEN
-                DENOM = 1.0
-             ELSE IF (I.EQ.2) THEN
-                DENOM = SPOL
-             ENDIF
              
 C            ANORM = FSIG/SPOL
 C            PRINT *, SPOL, ANORM, FSIG/ANORM
 C
 C        PRINT 90000,    TP, PR2, PTR, FSIG, UNUM, F2/SPOL
-             WRITE(I, 90000) TP, PR2, PTR, FSIG/DENOM, UNUM, F2/SPOL
+             WRITE(I, 90000) TP, PR2, PTR, FSIG, UNUM, F2/SPOL
 90000        FORMAT(1(1X, F7.4), 6(1X, E10.4))
 C
 10001 CONTINUE

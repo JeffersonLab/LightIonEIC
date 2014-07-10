@@ -102,13 +102,12 @@ void HallA_style() {
   gStyle->SetStripDecimals(kFALSE);
 }
 
-
+const int ngraphs = 1;
 
 void draw_graphs(Float_t tp[200], Float_t c_cs[9][200], Float_t m_cs[9][200]){
    HallA_style(); //make it pretty
    int marker_style = 20;
    TList can, mgcs, r_grphs, c_grphs, m_grphs;
-   int ngraphs = 5;
    Float_t ratio[9][200];
    for (int i = 0; i<ngraphs; i++){
        int idx = i + 1;

@@ -93,124 +93,38 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec,
    TCanvas *c1 = new TCanvas("c1", "Cross Sections", 700, 700);
    //make t' vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
-   //pad1->SetLogy(); //make Y axis on log scale
+   pad1->SetLogy(); //make Y axis on log scale
    //all the data has the same TP values so we use the same
    int size = TP_vec.size();
    TGraph * grph1 = new TGraph(size, &TP_vec[0], &FSIG2_vec[0]);
    grph1 -> SetMarkerStyle(20);
    grph1 -> SetMarkerColor(2);
-   grph1 -> SetTitle("NOMINAL");
+   grph1 -> SetTitle("0.7 * F2N");
    TGraph * grph2 = new TGraph(size, &TP_vec[0], &FSIG3_vec[0]);
    grph2 -> SetMarkerStyle(20);
    grph2 -> SetMarkerColor(3);  
-   grph2 -> SetTitle("NOMINAL/SPOL");
+   grph2 -> SetTitle("NOMINAL");
 /*   TGraph * grph3 = new TGraph(size, &TP_vec[0], &FSIG4_vec[0]);
    grph3 -> SetMarkerStyle(20);
    grph3 -> SetMarkerColor(4);  
    grph3 -> SetTitle("MOTT * SPOL");
 */
 
-   //do the various fits
-   vector<Double_t> tp_max, f2n_1o, f2n_2o, f2n_3o;
-   TF1 *f1 = new TF1("f1", "pol1");
-   TF2 *f2 = new TF1("f2", "pol2");
-   TF3 *f3 = new TF1("f3", "pol3");
-   float tp_start = 0.05;
-   float tp_bin = 0.005;
-   float tp_end = 0.5;
-   int nbin = ceil((tp_end - tp_start)/tp_bin);
-   float tp;
-   int ndf_last = 0;
-   int ndf;
-   char * f_str;
-   TF1 *f;
-   vector<Double_t> * cur;
-   for (int i = 0; i<nbin; i++){
-      tp = tp_start + (i * tp_bin);
-      tp_max.push_back(tp);
-      for (int j = 0; j<3; j++){
-          switch(j){
-              case(0): //first order fit
-                f = f1;
-                f_str = "f1";
-                cur = &f2n_1o;
-                break;
-              case(1): //2nd order fit
-                f = f2;
-                f_str = "f2";
-                cur = &f2n_2o;
-                break;
-              case(2): //3rd order fit
-                f = f3;
-                f_str = "f3";
-                cur = &f2n_3o;
-                break;
-           }
-          grph2 -> Fit(f_str, "QO", "", 0.0, tp);
-          ndf = f -> GetNDF();
-          if (ndf == ndf_last) continue; //didn't include any new points so fit is redundant
-          else {
-              ndf_last = ndf;
-              cur->push_back(f->GetParameter(0));
-              //cout << "Adding point: " << tp << " " << cur.back() << endl;
-          }
-      }
-   }
 
    TMultiGraph * mgr = new TMultiGraph();
-   mgr -> SetTitle("Normalization: Christian's Model");
-   //mgr -> Add(grph1);
+   mgr -> SetTitle("Christian's Model F2N");
+   mgr -> Add(grph1);
    mgr -> Add(grph2);
    //mgr -> Add(grph3);
    mgr -> Draw("APL");
 
- 
    mgr->GetXaxis()->SetTitle("t'");
    mgr->GetXaxis()->CenterTitle();
    mgr->GetYaxis()->SetTitle("Cross Section / Pole Factor");
    mgr->GetYaxis()->CenterTitle();
+ 
 
    c1->Update();
-
-   TCanvas *c3 = new TCanvas("c3", "F2N vs TP fit", 700, 700);
-   c3 -> cd();
-   TMultiGraph * mgf = new TMultiGraph();
-   mgf-> SetTitle("Extrapolated F2N vs Max t' in Fit (Christian's Model)");
-
-   TGraph * o1_grph = new TGraph(tp_max.size(), &tp_max[0], &f2n_1o[0]);
-   o1_grph -> SetMarkerStyle(20);
-   o1_grph -> SetMarkerColor(2);
-   o1_grph -> SetTitle("1st Order Fit");
-
-   TGraph * o2_grph = new TGraph(tp_max.size(), &tp_max[0], &f2n_2o[0]);
-   o2_grph -> SetMarkerStyle(20);
-   o2_grph -> SetMarkerColor(3);
-   o2_grph -> SetTitle("2nd Order Fit");
-
-   TGraph * o3_grph = new TGraph(tp_max.size(), &tp_max[0], &f2n_3o[0]);
-   o3_grph -> SetMarkerStyle(20);
-   o3_grph -> SetMarkerColor(4);
-   o3_grph -> SetTitle("3rd Order Fit");
-
-
-
-   mgf -> Add(o1_grph);
-   mgf -> Add(o2_grph);
-   mgf -> Add(o3_grph);
-   mgf -> Draw("APL");
-
-   c3 -> BuildLegend(0.2, 0.3, 0.45, 0.45);
-
-//   TCanvas *c2 = new TCanvas("c2", "Ratio", 700, 700);
-//   c2->cd();
-//   TGraph * rgrph = new TGraph(size, &TP_vec[0], &FSIG_ratios_2_3[0]);
-//   rgrph -> SetMarkerSize(20);
-//   rgrph -> SetMarkerColor(3);
-//   rgrph -> SetTitle("SPOL");
-//   rgrph -> Draw("APL");
-
-
-
 }
 bool get_lines(char line[nfiles][80], FILE * out [nfiles]){
     bool is_done = true;
@@ -236,7 +150,6 @@ int c_model_f2n_reader(bool print=false){
     vector<Float_t> FSIG2_vec;
     vector<Float_t> FSIG3_vec;
     vector<Float_t> FSIG4_vec;
-    vector<Float_t> FSIG_ratio_2_3;
 
     //open the  output files 
     FILE * out[nfiles]; 
