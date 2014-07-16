@@ -1,0 +1,7 @@
+gfortran -o tag_app_cross  tag_app_cross.o \
+tag_core.o \
+tag_user_wf.o \
+tag_user_f2.o \
+grv98.o \
+tag_user_g1.o \
+grsv2000pdf_g1.o
