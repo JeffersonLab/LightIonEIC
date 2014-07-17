@@ -93,13 +93,20 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec,
    TCanvas *c1 = new TCanvas("c1", "Cross Sections", 700, 700);
    //make t' vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
-   pad1->SetLogy(); //make Y axis on log scale
+   //pad1->SetLogy(); //make Y axis on log scale
    //all the data has the same TP values so we use the same
    int size = TP_vec.size();
    TGraph * grph1 = new TGraph(size, &TP_vec[0], &FSIG2_vec[0]);
    grph1 -> SetMarkerStyle(20);
-   grph1 -> SetMarkerColor(2);
-   grph1 -> SetTitle("0.7 * F2N");
+   grph1 -> SetMarkerColor(3);
+   grph1 -> SetTitle("Cross Section / Pole Factor vs t'");
+
+   grph1 -> Draw("APL");
+   grph1->GetXaxis()->SetTitle("t' (Gev^2)");
+   grph1->GetXaxis()->CenterTitle();
+   grph1->GetYaxis()->SetTitle("Cross Section / Pole Factor");
+   grph1->GetYaxis()->CenterTitle();
+
    TGraph * grph2 = new TGraph(size, &TP_vec[0], &FSIG3_vec[0]);
    grph2 -> SetMarkerStyle(20);
    grph2 -> SetMarkerColor(3);  
@@ -110,21 +117,20 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec,
    grph3 -> SetTitle("MOTT * SPOL");
 */
 
-
+/*
    TMultiGraph * mgr = new TMultiGraph();
-   mgr -> SetTitle("Christian's Model F2N");
+   mgr -> SetTitle("Cross Section vs t'");
    mgr -> Add(grph1);
-   mgr -> Add(grph2);
+   //mgr -> Add(grph2);
    //mgr -> Add(grph3);
    mgr -> Draw("APL");
 
-   mgr->GetXaxis()->SetTitle("t'");
+   mgr->GetXaxis()->SetTitle("t' (Gev^2)");
    mgr->GetXaxis()->CenterTitle();
-   mgr->GetYaxis()->SetTitle("Cross Section / Pole Factor");
+   mgr->GetYaxis()->SetTitle("Cross Section (nB / Gev^4)");
    mgr->GetYaxis()->CenterTitle();
- 
+*/
 
-   c1->Update();
 }
 bool get_lines(char line[nfiles][80], FILE * out [nfiles]){
     bool is_done = true;
