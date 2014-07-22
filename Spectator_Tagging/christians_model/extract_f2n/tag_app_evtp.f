@@ -17,7 +17,7 @@ C
 C     Create 3 different output files for the 3 different values used of F2N
       OPEN(1, FILE = 'EVTP.IN',   STATUS = 'OLD')
       OPEN(101, FILE = 'EVTP1.OUT',  STATUS = 'OLD')
-C     OPEN(102, FILE = 'EVTP2.OUT', STATUS = 'OLD')
+      OPEN(102, FILE = 'EVTP2.OUT', STATUS = 'OLD')
 C     OPEN(103, FILE = 'EVTP3.OUT', STATUS = 'OLD')
 C     OPEN(104, FILE = 'EVTP4.OUT', STATUS = 'OLD')
 C     OPEN(105, FILE = 'EVTP5.OUT', STATUS = 'OLD')
@@ -51,11 +51,12 @@ C
 C     Run the simulation 3 times while scaling F2N by different amounts
 
 
-      DO 88 I = 1, 1
+      DO 88 I = 1, 2
 
-C        Scaling F2N by 0.9, 1.0 then 1.1
-         SCLRTO = 0.1
-         SCLING = 1.0 !+ (3.0 - I)*SCLRTO
+C        Scaling F2N by given amounts
+         SCLRTO = 0.4
+         SCLING = 1.0 + (I-1) * SCLRTO
+         PRINT *, SCLING
 
 
 C        ...FREE NUCLEON STRUCTURE FUNCTION (INPUT MODEL)

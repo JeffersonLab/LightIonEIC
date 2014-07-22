@@ -1,5 +1,7 @@
-//Written by Oz Amram 6/18/2014
-//
+//Written by Oz Amram July 2014
+//NOTE: You cannot run this program twice in the same session of root or you
+//will get a seg-fault. If you need to rerun quit root and then run it again.
+//amram@jlab.org
 
 #include <stdio.h>
 #include <iostream>
@@ -14,9 +16,11 @@
 using namespace std;
 
 //Define Globals
-const int nfiles = 1; //global const needed to build arrays
+const int nfiles = 2; //global const needed to build arrays
 bool do_mc = true; //Do monte carlo simulations by adding a random gaussian error to the data
-bool model_indep_extraction = false; //Do the model independent method extraction or model dependent extraction
+int mode = 3; // 1: model independent extraction, 2: model dependent extraction, 3: blind model dependent extraction
+//be careful when doing the model dependent extraction or blind test because it can take up a lot
+//of memory if nruns is high (uses about 5GB ram for 500 runs)
 float percent_error = 0.003;
 bool single_run_graphs =false;//make graphs corresponding to a single randomization
 
@@ -45,7 +49,8 @@ void do_fits_mi(const int nfits, TGraph * grph, float tp_start, float tp_bin, co
    return;
 }
 
-void do_fits_nom(const int nfits, TGraph * grph_nom, float tp_start, float tp_bin, const int nbin, Double_t params[nbin][nfits][nfits]){
+void do_fits_nom(const int nfits, TGraph * grph_nom, float tp_start, float tp_bin, 
+        const int nbin, Double_t params[nbin][nfits][nfits]){
     //do the fits for the unrandomized data and output the value of the fitting parameters as a 3d array (params)
     float tp;
     TF1 * f[nfits];
@@ -60,7 +65,7 @@ void do_fits_nom(const int nfits, TGraph * grph_nom, float tp_start, float tp_bi
       for (int j = 0; j<nfits; j++){
           grph_nom -> Fit(TString::Format("f_nom%i", j), "QO", "", 0.0, tp);
           cur_f = f[j];
-          for (int k = 1; k <= j; k++){ // dont want first parameter because we are fitting it
+          for (int k = 0; k <= j; k++){
               Double_t temp = cur_f -> GetParameter(k);
               params[i][j][k] = temp;
          }
@@ -76,12 +81,14 @@ void do_fits_md(const int nfits, TGraph * grph_rand, float tp_start, float tp_bi
        Double_t  tp_max[], Double_t  f2n[nfits][nbin]){
    //MODEL DEPENDENT VERSION
    //do the various fits to the data for different orders and maximum tp's
+   //uses params to constraint some of the parameters in the fit
    //tp_max and d f2n are ouputs and the rest are inputs
    float tp;
    vector<vector<TF1 *>>  f;
    f.resize(nbin);
    Double_t temp;
    char * f_str[7];
+   //setup different order functions
    f_str[0] = "[0]";
    f_str[1] = "[0] + [1] * x";
    f_str[2] = "[0] + [1] * x + [2] * pow(x,2)";
@@ -93,10 +100,10 @@ void do_fits_md(const int nfits, TGraph * grph_rand, float tp_start, float tp_bi
        f[i].resize(nfits);
        for (int j = 0; j<nfits; j++){
             f[i][j] = new TF1(TString::Format("f_rand%i%i", i, j), f_str[j]);
-            for (int k = 1; k<=j; k++){
+            for (int k = 1; k<=j; k++){ //want 0 parameter free
                 temp = params[i][j][k];
                 f[i][j] -> FixParameter(k, temp);
-            }
+            } 
         }
    }
    
@@ -113,6 +120,54 @@ void do_fits_md(const int nfits, TGraph * grph_rand, float tp_start, float tp_bi
    
 }
 
+void do_fits_blind(const int nfits, TGraph * grph_rand, float tp_start, float tp_bin, 
+       const int nbin, Double_t params[][nfits][nfits], 
+       Double_t  tp_max[], Double_t  f2n[nfits][nbin]){
+   //BLIND TEST VERSION
+   //do the various fits to the data for different orders and maximum tp's
+   //uses params to constraint some of the parameters in the fit
+   //tp_max and d f2n are ouputs and the rest are inputs
+   float tp;
+   vector<vector<TF1 *>>  f;
+   f.resize(nbin);
+   Double_t temp;
+   char * f_str[7];
+   Double_t scaling;
+   Double_t f2n_val;
+   //setup different order fit functions. param [10] is the scaling ratio
+   //the other params will be fixed
+   f_str[0] = "[0] * ([1])";
+   f_str[1] = "[0] *([1] + [2] * x)";
+   f_str[2] = "[0] * ([1] + [2] * x + [3] * pow(x,2))";
+   f_str[3] = "[0] * ([1] + [2] * x + [3] * pow(x,2) + [4] * pow(x,3))";
+   f_str[4] = "[0] * ([1] + [2] * x + [3] * pow(x,2) + [4] * pow(x,3) +  [5] * pow(x,4))";
+   f_str[5] = "[0] * ([1] + [2] * x + [3] * pow(x,2) + [4] * pow(x, 3) + [5] * pow(x,4) + [6] * pow(x,5))";
+   f_str[6] = "[0] * ([1] + [2] * x + [3] * pow(x,2) + [4] * pow(x, 3) + [5] * pow(x,4) + [6] * pow(x,5) + [7] * pow(x,6))";
+   for (int i = 0; i<nbin ; i++){ //set up the different order fit functions
+       f[i].resize(nfits);
+       for (int j = 0; j<nfits; j++){
+            f[i][j] = new TF1(TString::Format("f_rand%i%i", i, j), f_str[j]);
+            for (int k = 0; k <= j; k++){ //fix all params but scaling ratio ([10])
+                temp = params[i][j][k];
+                f[i][j] -> FixParameter(k+1, temp);
+            } 
+       } 
+   }
+   
+   for (int i = 0; i<nbin; i++){
+      tp = tp_start + (i * tp_bin);
+      tp_max[i] = tp;
+      for (int j = 0; j<nfits; j++){
+          grph_rand -> Fit(TString::Format("f_rand%i%i", i,j), "QO", "", 0.0, tp);
+          scaling = f[i][j] -> GetParameter(0); //scaling variable is 0 (fitted value)
+          f2n_val = scaling * (f[i][j] -> GetParameter(1)); // scaling * intial F2N (set) is extracted F2N
+          f2n[j][i] = f2n_val;
+      }
+   }
+
+   return;
+   
+}
 bool do_slice(const int nfits, int bin_slice, const int nbin, Double_t f2n[][nbin],
               Double_t slice[nfits], Double_t n[nfits], 
               vector<Double_t> &extracted_f2n, vector<Double_t> &errors){
@@ -134,7 +189,6 @@ bool do_slice(const int nfits, int bin_slice, const int nbin, Double_t f2n[][nbi
            }
        }
        last = slice[i];
-       //cout << TString::Format("Order is %i. F2N is %f", i, slice[i]) << endl;
    }
    return true;
 
@@ -196,7 +250,7 @@ void HallA_style() {
   gStyle->SetStripDecimals(kFALSE);
 }
 
-void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec, 
+void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec, vector<Float_t> FSIG2_vec,
                  vector<Float_t> XErrors, vector<Float_t> YErrors){
    HallA_style(); //make it pretty
    //make t' vs cross section graph
@@ -232,7 +286,6 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
    const float tp_end = 0.15;
    const int nbin = ceil((tp_end - tp_start)/tp_bin);
    const int nbin_ = nbin; //CINT didnt think nbin was const for some reason so this is a work around
-   cout << nbin << endl;
 
    float tp_slice = 0.075;
    int bin_slice = (tp_slice - tp_start)/tp_bin;
@@ -245,7 +298,7 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
 
 
    if (do_mc){
-       if (model_indep_extraction){
+       if (mode == 1){ //model independent extraction
            vector<Double_t> extracted_f2n, error;
            vector<Float_t> *  FSIG_rand = 0;
            int success = 0;
@@ -261,19 +314,19 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
                 delete FSIG_rand;
            }
         }
-       else{//model dependent extraction
+       else if (mode == 2) {//model dependent extraction
            vector<Double_t> extracted_f2n, error;
-           TGraph *grph_nom = new TGraph(size, &TP_vec[0], &FSIG1_vec[0]);
+           TGraph *grph_nom = new TGraph(size, &TP_vec[0], &FSIG1_vec[0]); 
            Double_t params[nbin_][nfits][nfits];
-           do_fits_nom(nfits, grph_nom, tp_start, tp_bin, nbin, params);
+           do_fits_nom(nfits, grph_nom, tp_start, tp_bin, nbin, params); //do fits for "model" data
            vector<Float_t> *  FSIG_rand = 0;
            int success = 0;
            int failure = 0;
            for (int i = 0; i<nruns; i++){
                 FSIG_rand = new vector<Float_t>;
-                randomize(FSIG1_vec, *FSIG_rand);
+                randomize(FSIG1_vec, *FSIG_rand); //randomize the data
                 TGraph * grph_rand = new TGraphErrors(size, &TP_vec[0], &(*FSIG_rand)[0], &XErrors[0], &YErrors[0]);
-                do_fits_md(nfits, grph_rand, tp_start, tp_bin, nbin_, params, tp_max, f2n);
+                do_fits_md(nfits, grph_rand, tp_start, tp_bin, nbin_, params, tp_max, f2n); //do fits
                 bool worked = do_slice(nfits, bin_slice, nbin, f2n, slice, n, extracted_f2n, error);
                 if (worked) success ++;
                 else failure++;
@@ -281,15 +334,38 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
            }
 
        }
+       else if (mode ==3){
+           vector<Double_t> extracted_f2n, error;
+           TGraph *grph_nom = new TGraph(size, &TP_vec[0], &FSIG1_vec[0]);//use 1st data set for model curve
+           Double_t params[nbin_][nfits][nfits];
+           do_fits_nom(nfits, grph_nom, tp_start, tp_bin, nbin, params);
+           vector<Float_t> *  FSIG_rand = 0;
+           int success = 0;
+           int failure = 0;
+           for (int i = 0; i<nruns; i++){
+                FSIG_rand = new vector<Float_t>;
+                randomize(FSIG2_vec, *FSIG_rand);//randomize the 2nd data set (unknown F2N)
+                TGraph * grph_rand = new TGraphErrors(size, &TP_vec[0], &(*FSIG_rand)[0], &XErrors[0], &YErrors[0]);
+                do_fits_blind(nfits, grph_rand, tp_start, tp_bin, nbin_, params, tp_max, f2n);
+                bool worked = do_slice(nfits, bin_slice, nbin, f2n, slice, n, extracted_f2n, error);
+                if (worked) success ++;
+                else failure++;
+                delete FSIG_rand;
+           }
+    
+       }
+
        printf("We were under 1%% error between 3rd and 4th order  %2.1f%% of the time for t' max = %1.3f \n", success/10.0, tp_slice);
        //draw histograms of extraced F2N and error
        TCanvas *hc1 = new TCanvas("hc1", "Extracted F2N", 700, 700);
        TCanvas *hc2 = new TCanvas("hc2", "Difference between 3rd and 4th order", 700, 700);
        TH1D * f2n_hist = new TH1D("F2N", 
-              TString::Format("#splitline{Extracted F2N from 3rd order fit:}{t' max = %1.3f. Random Error = %1.2f%%}", tp_slice, 100*percent_error),
-              30, 2.30, 2.34); 
+              TString::Format("#splitline{Blind test: F2N extraction:}{t' max = %1.3f. Random Error = %1.2f%%}", 
+              tp_slice, 100*percent_error),
+              30, 3.23, 3.27); 
        TH1D * error_hist = new TH1D("3rd vs 4th Order", 
-              TString::Format("#splitline{Percentage difference between 3rd and 4th order fits:}{t' max = %1.3f. Random Error = %1.2f%%}", tp_slice,100* percent_error),
+              TString::Format("#splitline{Percentage difference between 3rd and 4th order fits:}{t' max = %1.3f. Random Error = %1.2f%%}", 
+              tp_slice,100* percent_error),
               30, 0.0, 2.0);
        for (int i = 0; i < nruns; i++) {
             f2n_hist->Fill(extracted_f2n[i]);
@@ -451,6 +527,7 @@ int c_model_extraction_mc(bool print=false){
 
     vector<Float_t> TP_vec;
     vector<Float_t> FSIG1_vec;
+    vector<Float_t> FSIG2_vec;
     vector<Float_t> FSIG_rand;
     vector<Float_t> YErrors;
     vector<Float_t> XErrors;
@@ -502,6 +579,7 @@ int c_model_extraction_mc(bool print=false){
                }
                  
                      FSIG1_vec.push_back(FSIG[0]);
+                     FSIG2_vec.push_back(FSIG[1]);
                      TP_vec.push_back(TMath::Abs(TP[0]));
                      //cout << FSIG[0] << " " <<  FSIG[1] << endl;
                   
@@ -511,7 +589,7 @@ int c_model_extraction_mc(bool print=false){
         
         
    make_errors(FSIG1_vec, XErrors, YErrors);
-   make_graphs(TP_vec, FSIG1_vec, XErrors, YErrors);
+   make_graphs(TP_vec, FSIG1_vec, FSIG2_vec, XErrors, YErrors);
    //write the tree to a root file 
    char * file_name_str = "c_model_x_data.root";
    TFile * root_file = 0;
