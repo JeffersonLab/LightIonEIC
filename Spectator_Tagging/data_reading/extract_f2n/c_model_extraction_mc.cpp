@@ -17,7 +17,8 @@ using namespace std;
 const int nfiles = 1; //global const needed to build arrays
 bool do_mc = true; //Do monte carlo simulations by adding a random gaussian error to the data
 bool model_indep_extraction = false; //Do the model independent method extraction or model dependent extraction
-float percent_error = 0.001;
+float percent_error = 0.003;
+bool single_run_graphs =false;//make graphs corresponding to a single randomization
 
 
 void do_fits_mi(const int nfits, TGraph * grph, float tp_start, float tp_bin, const int nbin, 
@@ -59,7 +60,7 @@ void do_fits_nom(const int nfits, TGraph * grph_nom, float tp_start, float tp_bi
       for (int j = 0; j<nfits; j++){
           grph_nom -> Fit(TString::Format("f_nom%i", j), "QO", "", 0.0, tp);
           cur_f = f[j];
-          for (int k = 0; k < j+1; k++){
+          for (int k = 1; k <= j; k++){ // dont want first parameter because we are fitting it
               Double_t temp = cur_f -> GetParameter(k);
               params[i][j][k] = temp;
          }
@@ -71,39 +72,45 @@ void do_fits_nom(const int nfits, TGraph * grph_nom, float tp_start, float tp_bi
 
 }
 void do_fits_md(const int nfits, TGraph * grph_rand, float tp_start, float tp_bin, 
-       const int nbin, Double_t params[][][], 
-       Double_t  tp_max[], Double_t  f2n[][]){
+       const int nbin, Double_t params[][nfits][nfits], 
+       Double_t  tp_max[], Double_t  f2n[nfits][nbin]){
    //MODEL DEPENDENT VERSION
    //do the various fits to the data for different orders and maximum tp's
    //tp_max and d f2n are ouputs and the rest are inputs
    float tp;
-   vector<vector<TF1 *>> f;
+   vector<vector<TF1 *>>  f;
    f.resize(nbin);
-   TF1 * cur_f;
    Double_t temp;
+   char * f_str[7];
+   f_str[0] = "[0]";
+   f_str[1] = "[0] + [1] * x";
+   f_str[2] = "[0] + [1] * x + [2] * pow(x,2)";
+   f_str[3] = "[0] + [1] * x + [2] * pow(x,2) + [3] * pow(x,3)";
+   f_str[4] = "[0] + [1] * x + [2] * pow(x,2) + [3] * pow(x,3) + [4] * pow(x,4)";
+   f_str[5] = "[0] + [1] * x + [2] * pow(x,2) + [3] * pow(x, 3) + [4] * pow(x,4) + [5] * pow(x,5)";
+   f_str[6] = "[0] + [1] * x + [2] * pow(x,2) + [3] * pow(x, 3) + [4] * pow(x,4) + [5] * pow(x,5) + [6] * pow(x,6)";
    for (int i = 0; i<nbin ; i++){ //set up the different order fit functions
        f[i].resize(nfits);
        for (int j = 0; j<nfits; j++){
-            f[i][j] = new TF1(TString::Format("f_rand%i%i", i, j), TString::Format("pol%i", j));
-            for (int k = 0; k < j + 1; k++){
-                //temp = params[i][j][k];
-                //f[i][j] -> SetParameter(k, temp);
+            f[i][j] = new TF1(TString::Format("f_rand%i%i", i, j), f_str[j]);
+            for (int k = 1; k<=j; k++){
+                temp = params[i][j][k];
+                f[i][j] -> FixParameter(k, temp);
             }
         }
    }
-   /*
+   
    for (int i = 0; i<nbin; i++){
       tp = tp_start + (i * tp_bin);
       tp_max[i] = tp;
       for (int j = 0; j<nfits; j++){
-          grph_rand -> Fit(TString::Format("f_rand%i", j), "QO", "", 0.0, tp);
-          cur_f = f[i][j];
-          temp = cur_f -> GetParameter(0);
-          f2n[i][j] = temp;
+          grph_rand -> Fit(TString::Format("f_rand%i%i", i,j), "QO", "", 0.0, tp);
+          f2n[j][i] = f[i][j] -> GetParameter(0);
       }
    }
+
    return;
-   */
+   
 }
 
 bool do_slice(const int nfits, int bin_slice, const int nbin, Double_t f2n[][nbin],
@@ -195,7 +202,6 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
    //make t' vs cross section graph
    //all the data has the same TP values so we use the same
    int size = TP_vec.size();
-   bool single_run_graphs =true;//make graphs corresponding to a single randomization
 
 
 
@@ -220,17 +226,18 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
 
 
    //do the various fits
-   const int nfits = 8; //highest order fit is 1 less because of 0th order fit
+   const int nfits = 5; //highest order fit is 1 less because of 0th order fit
    const float tp_start = 0.050;
    const float tp_bin = 0.005;
-   const float tp_end = 0.20;
+   const float tp_end = 0.15;
    const int nbin = ceil((tp_end - tp_start)/tp_bin);
    const int nbin_ = nbin; //CINT didnt think nbin was const for some reason so this is a work around
+   cout << nbin << endl;
 
    float tp_slice = 0.075;
    int bin_slice = (tp_slice - tp_start)/tp_bin;
 
-   int nruns = 1000;
+   int nruns = 500;
 
 
    Double_t slice[nfits], n[nfits];
@@ -253,7 +260,6 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
                 else failure++;
                 delete FSIG_rand;
            }
-
         }
        else{//model dependent extraction
            vector<Double_t> extracted_f2n, error;
@@ -267,7 +273,6 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
                 FSIG_rand = new vector<Float_t>;
                 randomize(FSIG1_vec, *FSIG_rand);
                 TGraph * grph_rand = new TGraphErrors(size, &TP_vec[0], &(*FSIG_rand)[0], &XErrors[0], &YErrors[0]);
-                cout << nfits << endl;
                 do_fits_md(nfits, grph_rand, tp_start, tp_bin, nbin_, params, tp_max, f2n);
                 bool worked = do_slice(nfits, bin_slice, nbin, f2n, slice, n, extracted_f2n, error);
                 if (worked) success ++;
@@ -277,7 +282,6 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
 
        }
        printf("We were under 1%% error between 3rd and 4th order  %2.1f%% of the time for t' max = %1.3f \n", success/10.0, tp_slice);
-
        //draw histograms of extraced F2N and error
        TCanvas *hc1 = new TCanvas("hc1", "Extracted F2N", 700, 700);
        TCanvas *hc2 = new TCanvas("hc2", "Difference between 3rd and 4th order", 700, 700);
@@ -301,7 +305,6 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
        error_hist -> Draw();
        error_hist -> GetXaxis() -> SetTitle("Percentage Difference");
 
-
        
    }
    else{
@@ -312,7 +315,6 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG1_vec,
    }
 
    if (single_run_graphs){ //draw graphs corresponding to the last run of randomization or non-randomized data
-       //Draw things
        TCanvas *c3 = new TCanvas("c3", "F2N vs TP fit", 700, 700);
        c3 -> cd();
        TMultiGraph * mgf = new TMultiGraph();
