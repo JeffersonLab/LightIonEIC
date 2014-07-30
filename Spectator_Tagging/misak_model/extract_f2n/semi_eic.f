@@ -144,11 +144,14 @@ C      RUN MAIN FUNCTION
               call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,scaling, x,s,si,
      &          Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
 
-     
+    
+C       Get the SPOL factor 
+        CALL TAGRES(RES, 1.0000)
+        SPOL = RES/(TP)**2 
 
         
 C       OUTPUT THE VALUES
-              WRITE(I, 90000) TP,p_rt,si
+              WRITE(I, 90000) TP, p_rt, si/SPOL
 
 100     CONTINUE
 99      scaling = scaling + scaling_inc

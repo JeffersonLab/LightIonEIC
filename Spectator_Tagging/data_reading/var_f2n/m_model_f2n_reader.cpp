@@ -96,13 +96,14 @@ void make_graphs(vector<Float_t> tp_vec,  vector<Float_t> si1_vec,
    TCanvas *c1 = new TCanvas("c1", "Cross Sections", 700, 700);
    //make  vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
-   //pad1->SetLogy(); //make Y axis on log scale
+   pad1->SetLogy(); //make Y axis on log scale
    //all the data has the same tp values so we use the same vec
    int size = tp_vec.size();
    TGraph * grph1 = new TGraph(size, &tp_vec[0], &si1_vec[0]);
    grph1 -> SetMarkerStyle(20);
    grph1 -> SetMarkerColor(2);
    grph1 -> SetTitle("NOMINAL");
+
    TGraph * grph2 = new TGraph(size, &tp_vec[0], &si2_vec[0]);
    grph2 -> SetMarkerStyle(20);
    grph2 -> SetMarkerColor(3);  

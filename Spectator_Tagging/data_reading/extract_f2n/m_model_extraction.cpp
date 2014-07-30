@@ -28,7 +28,7 @@ string int_to_string(int i){
 string get_outfile_path(int index){
     // returns the path to the EVTP.OUT file
     // ONLY WORKS IF EVTP.OUT is in ../tag from this file
-   string outfile_path = "../../misak_model/var_f2n/MISAK_DATA_"
+   string outfile_path = "../../misak_model/extract_f2n/MISAK_DATA_"
                                                      +  int_to_string(index)
                                                      +   ".OUT";
     return outfile_path;
@@ -97,17 +97,39 @@ void make_graphs(vector<Float_t> tp_vec,  vector<Float_t> si1_vec,
    //make  vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
    //pad1->SetLogy(); //make Y axis on log scale
-   //all the data has the same tp values so we use the same vec
+   //all the data has the same prt values so we use the same
    int size = tp_vec.size();
-   TGraph * grph1 = new TGraph(size, &tp_vec[0], &si1_vec[0]);
-   grph1 -> SetMarkerStyle(20);
-   grph1 -> SetMarkerColor(2);
-   grph1 -> SetTitle("NOMINAL");
+//   TGraph * grph1 = new TGraph(size, &tp_vec[0], &si1_vec[0]);
+//   grph1 -> SetMarkerStyle(20);
+//   grph1 -> SetMarkerColor(2);
+//   grph1 -> SetTitle("NOMINAL");
    TGraph * grph2 = new TGraph(size, &tp_vec[0], &si2_vec[0]);
    grph2 -> SetMarkerStyle(20);
    grph2 -> SetMarkerColor(3);  
    grph2 -> SetTitle("Normalized");
 
+   //do the various fits
+   vector<Double_t> tp_max, y_intercept;
+   TF1 *f1 = new TF1("f1", "pol3");
+   float tp_start = 0.05;
+   float tp_bin = 0.005;
+   float tp_end = 0.15;
+   int nbin = ceil((tp_end - tp_start)/tp_bin);
+   float tp;
+   int ndf_last = 0;
+   int ndf;
+   for (int i = 0; i<nbin; i++){
+      tp = tp_start + (i * tp_bin);
+      grph2 -> Fit("f1", "QO", "", 0.0, tp);
+      ndf = f1 -> GetNDF();
+      if (ndf == ndf_last) continue; //didn't include any new points so fit is redundant
+      else {
+          ndf_last = ndf;
+          tp_max.push_back(tp);
+          y_intercept.push_back(f1->GetParameter(0));
+          cout << "Adding point: " << tp << " " << y_intercept.back() << endl;
+      }
+   }
 
 
    grph2 -> SetTitle("Normalization: Misak's Model");
@@ -121,6 +143,41 @@ void make_graphs(vector<Float_t> tp_vec,  vector<Float_t> si1_vec,
 
    c1->Update();
 
+   TCanvas *c3 = new TCanvas("c3", "F2N vs TP fit", 700, 700);
+   c3 -> cd();
+   TGraph * fgrph = new TGraph(tp_max.size(), &tp_max[0], &y_intercept[0]);
+   fgrph -> SetMarkerStyle(20);
+   fgrph -> SetMarkerColor(2);
+   fgrph -> SetTitle("Extrapolated F2N vs Max t' in Fit (Misak's Model)");
+   fgrph -> Draw("APL");
+
+//   TCanvas *c2 = new TCanvas("c2", "Ratios", 700, 700);
+//   c2-> cd();
+//   TGraph * ratio1 = new TGraph(size, &tp_vec[0], &si_ratio_1_2[0]);
+//   ratio1 -> SetMarkerStyle(20);
+//   ratio1 -> SetMarkerColor(2);
+//   ratio1 -> SetTitle("0.9 * F2N / Nominal");
+//
+//   TGraph * ratio2 = new TGraph(size, &tp_vec[0], &si_ratio_3_2[0]);
+//   ratio2 -> SetMarkerStyle(20);
+//   ratio2 -> SetMarkerColor(3);
+//   ratio2 -> SetTitle("1.1 * F2N / Nominal");
+//
+//   TMultiGraph * mgr = new TMultiGraph();
+//   mgr -> SetTitle("Ratios");
+//   mgr -> Add(ratio1);
+//   mgr -> Add(ratio2);
+//   mgr -> Draw("APL");
+//   
+//   mgr->GetXaxis()->SetTitle("t' (GEV/C)");
+//   mgr->GetXaxis()->CenterTitle();
+//   mgr->GetYaxis()->SetTitle("Ratio of Cross Sections");
+//   mgr->GetYaxis()->CenterTitle();
+//   mgr->GetYaxis() -> SetTitleOffset(1.8);
+//
+//
+//   c2-> BuildLegend();
+//
 
 }
 bool get_lines(char  line[nfiles][100], FILE * out[nfiles]){

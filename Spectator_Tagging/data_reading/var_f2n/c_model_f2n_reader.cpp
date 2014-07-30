@@ -93,7 +93,7 @@ void make_graphs(vector<Float_t> TP_vec,  vector<Float_t> FSIG2_vec,
    TCanvas *c1 = new TCanvas("c1", "Cross Sections", 700, 700);
    //make t' vs cross section graph
    TVirtualPad  *pad1 = c1->cd();
-   //pad1->SetLogy(); //make Y axis on log scale
+   pad1->SetLogy(); //make Y axis on log scale
    //all the data has the same TP values so we use the same
    int size = TP_vec.size();
    TGraph * grph1 = new TGraph(size, &TP_vec[0], &FSIG2_vec[0]);
@@ -221,7 +221,7 @@ int c_model_f2n_reader(bool print=false){
    //print_my_tree(tree);
    make_graphs(TP_vec, FSIG2_vec, FSIG3_vec, FSIG4_vec);
    //write the tree to a root file 
-   char * file_name_str = "c_model_x_data.root";
+   char * file_name_str = "c_model_f2n_data.root";
    TFile * root_file = 0;
    root_file = new TFile (file_name_str, "RECREATE");
    tree->Write();
