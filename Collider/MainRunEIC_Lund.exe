@@ -2,7 +2,7 @@
 use Math::Trig;
 use Math::Complex;
 
-print "please double check electron and Deuteron beam enegies in the code (semi_eic_lund.f) ...\n\n\n";
+print "please double check electron and Deuteron beam enegies in the analys code (e.g: semi_eic_lund.f) ...\n\n\n";
 
 print "Give the start run number [10000]\n";
 $srunnum = <STDIN>;
@@ -29,13 +29,13 @@ if($ansCONF eq 'yes'||$ansCONF eq 'YES'||$ansCONF eq 'Y'||$ansCONF eq 'y'){
 	    $run2 = $ir+100;
 	    system("rm -f comis*.inc");
 	    system("rm -f  gn_ed_eic.input");
-	    system("ln -s ./eic_collider_data/gn_ed_eic$ir.fix ./gn_ed_eic.input");
-	    print " call data: eic_collider_data/gn_ed_eic$ir.fix ./gn_ed_eic.input \n";
+	    system("ln -s ./eic_collider_data/gn_ed_eic$ir\.fix ./gn_ed_eic.input");
+	    print " call data: eic_collider_data/gn_ed_eic$ir\.fix ./gn_ed_eic.input \n";
 
-	    system("rm -f a.out");
-	    system("f95 semi_eic_ana0.f");
+	    system("rm -f SemiFixLund.exe");
+	    system("f95 semi_fix_lund.f -o SemiFixLund.exe");
 	    system("rm -f ed_semi_eic77.dat");
-	    system("./a.out");
+	    system("./SemiFixLund.exe");
 	    print "end the run \n";
 
 	    print "\n make sure you have all variable in your Ntuple \n";
@@ -61,7 +61,7 @@ if($ansCONF eq 'yes'||$ansCONF eq 'YES'||$ansCONF eq 'Y'||$ansCONF eq 'y'){
 	system("ls -al ednt10/*.hbook");
 	system("./select_gdata_fix.exe");
 
-	system("RunF2D_tprim0.exe");
+	system("./RunF2D_tPrim_FixTgt.exe");
 
     }
 }
@@ -78,13 +78,13 @@ elsif($ansCONF eq 'no'||$ansCONF eq 'NO'||$ansCONF eq 'N'||$ansCONF eq 'n'){
 	    $run2 = $ir;
 	    system("rm -f comis*.inc");
 	    system("rm -f  gn_ed_eic.input");
-	    system("ln -s ./eic_collider_data/gn_ed_eic$ir.coll ./gn_ed_eic.input");
-	    print " call data: eic_collider_data/gn_ed_eic$ir.coll ./gn_ed_eic.input \n";
+	    system("ln -s ./eic_collider_data/gn_ed_eic$ir\.coll ./gn_ed_eic.input");
+	    print " call data: eic_collider_data/gn_ed_eic$ir\.coll ./gn_ed_eic.input \n";
 	    
-	    system("rm -f a.out");
-	    system("f95 semi_eic_lund.f");
+	    system("rm -f SemiEICLundGEMC.exe");
+	    system("f95  JR14NLO08SF.f dfint.f semi_eic_lund_gemc.f -o SemiEICLundGEMC.exe");
 	    system("rm -f ed_semi_eic77.dat");
-	    system("./a.out");
+	    system("./SemiEICLundGEMC.exe");
 	    system("rm -f ./lund_out/lund_ed_eic$ir.dat");
 # create LUND out put
 	    system("mv ed_semi_eic77.dat ./lund_out/lund_ed_eic$ir.dat");
@@ -93,10 +93,10 @@ elsif($ansCONF eq 'no'||$ansCONF eq 'NO'||$ansCONF eq 'N'||$ansCONF eq 'n'){
 # electron :  egen,echarge,pid,pe_x,pe_y,pe_z,pe_E,pe_M,ve_x,ve_y,ve_z
 # spectator:  sgen,scharge,pid1,p_rx,p_ry,p_rz,E_r,pm,v_rx,v_ry,v_rz
 
-	    system("rm -f a.out");
-	    system("f95 semi_eic_lund_ana.f");
+	    system("rm -f SemiEICLundAna.exe");
+	    system("f95  JR14NLO08SF.f dfint.f semi_eic_lund_ana.f -o SemiEICLundAna.exe");
 	    system("rm -f ed_semi_eic77.dat");
-	    system("./a.out");
+	    system("./SemiEICLundAna.exe");
 	    print "end the run \n";
 
 	    print "\n make sure you have all variable in your Ntuple \n";
@@ -121,7 +121,7 @@ elsif($ansCONF eq 'no'||$ansCONF eq 'NO'||$ansCONF eq 'N'||$ansCONF eq 'n'){
 	system("ls -al ednt10/*.hbook");
 	system("./select_gdata_coll.exe");
 	
-	system("RunF2D_tprim_Lund_Ana.exe");
+	system("./RunF2D_tPrim_Coll.exe");
 	
     }
 }
