@@ -1,0 +1,69 @@
+#! /usr/bin/perl
+use Math::Trig;
+use Math::Complex;
+
+print "Give the start run number [10000]\n";
+$srunnum = <STDIN>;
+chop($srunnum);
+
+print "Give the end run number [10099]\n";
+$erunnum = <STDIN>;
+chop($erunnum);
+
+
+print (" *\n **\n *****\n *******\n Running the Event Generator \n *******\n *****\n **\n *\n \n");
+print "Do you want to run *FIXED TARGET CONFIGURATION*  ?? [y/n]\n";
+
+chop($ansCONF = <STDIN>);
+
+if($ansCONF eq 'yes'||$ansCONF eq 'YES'||$ansCONF eq 'Y'||$ansCONF eq 'y'){
+
+
+    if($srunnum<=$erunnum){
+	print "\n\n\n OK, I am going to generate event based on FIXED TARGET CONFIGURATION~~!!!!\n\n\n";
+
+# for the fixed target configuration test
+	for($ir=$srunnum;$ir<=$erunnum;$ir++){
+	    $run = $ir;
+	    $run2 = $ir;
+	    system("rm -f SpectatorMC_fixMC_cpp.d SpectatorMC_fixMC_cpp.so");
+	    system("rm -f testout.txt");
+	    system("/apps/root/PRO/root/bin/root -b -q batch_fixMC.cc");
+	    system("scp testout.txt ./eic_collider_data/gn\_ed\_eic$ir\.fix");
+#	    system("scp testout.txt parkkj\@ifarm1101:/lustre/expphy/volatile/clas/claseg3/parkkj/eic_collider/gn\_ed\_eic$ir\.txt");
+	    print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ run number $ir is completed......\n\n\n";
+	    sleep(1);
+	}
+
+    }
+    else{
+	die(print "Endding Run Number should be larger than the Starting Number \n \n \n");
+    }
+
+}
+elsif($ansCONF eq 'no'||$ansCONF eq 'NO'||$ansCONF eq 'N'||$ansCONF eq 'n'){
+
+# for the collider configuration test
+
+    print "\n\n\n OK, I am going to generate event based on COLLIDER CONFIGURATION~~!!!!\n\n\n";
+    if($srunnum<=$erunnum){
+
+# for the fixed target configuration test
+	for($ir=$srunnum;$ir<=$erunnum;$ir++){
+	    $run = $ir;
+	    $run2 = $ir;
+	    system("rm -f SpectatorMC_collMC_cpp.d SpectatorMC_collMC_cpp.so");
+	    system("rm -f testout.txt");
+	    system("/apps/root/PRO/root/bin/root -b -q batch_collMC.cc");
+	    # system("scp testout.txt parkkj\@ifarm:/lustre/expphy/volatile/clas/claseg3/parkkj/eic_collider/gn\_ed\_eic$ir\.txt");
+	    # system("scp testout.txt ./eic_collider_temp/tel_aviv/gn\_ed\_eic$ir\.txt");
+	    system("scp testout.txt ./eic_collider_data/gn\_ed\_eic$ir\.coll");
+	    print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ run number $ir is completed......\n\n\n";
+	    sleep(1);
+	}
+
+    }
+    else{
+	die(print "Endding Run Number should be larger than the Starting Number \n \n \n");
+    }
+}
