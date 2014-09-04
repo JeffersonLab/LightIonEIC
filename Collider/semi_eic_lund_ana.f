@@ -1,10 +1,14 @@
-      program crs_weight
-c   test version-1.0
+      program semi_eic_lund_ana
+c     cross-section weight process for the Electron-Ion-Collider framework
+c     The output is used for ANALAYSIS
+
+c   
         common/par/pi,pm,pmp,pmn,dm,eb
         character (len=99) :: filename
-        integer :: i, j, lines
+        integer :: i, j, lines,IPN
+
 c        real, dimension(999,20) :: aa
-        real hvec0(7),h(7)
+        real hvec0(8),h(8)
 
         real ee(11),evec1(8)
         real sp(11),hvec1(8)
@@ -16,6 +20,10 @@ c        real, dimension(999,20) :: aa
         real mprot,mneut,pd
         real R2D,alpha_em
 
+        double precision :: f2nn,f2nn3,RES,FSIG,F2D,S,E_recoil
+       double precision :: xkjfac,xjacobian,crs0,crs1,crs2
+        double precision :: PI
+
         integer nptl,pid,pid1,pid2
         integer egen,sgen,xgen
         integer echarge,scharge,xcharge
@@ -24,27 +32,37 @@ c        real, dimension(999,20) :: aa
 
         ntgt =2
         nproton = 1
+c     Some variable definition Christian's model
+        ED = 0.00222
+        UD = 2*mneut - ED
+        PI = 0.314159265358979D+01
 
 
-c     initial electron beam energy
+C     ###########################################################
+C     USER CHOICE                                          BEGIN
+C     ###########################################################
+
+c     Initial electron beam energy
         ei =5.
-c     deutron mass and momentum
+c     Deuteron mass 
         dm = 1.875
-
-c     fixed target case  deuteron momentum = 0.0
-c        pd = 0.0
+c     Fixed target case  deuteron momentum = 0.0      \\        pd = 0.0
         pd = 100.0
         mprot =0.93827
         mneut =0.93955
+c     Selection of model (M. Sargsian): 1,  (C. Weiss): 2
+        imodel = 2
+c     Call F2 parameterization for IMODEL=2,  (C.Weiss) : 1,  (P.Jimenez-Delgad): 3
+        IPN =1
+C     ###########################################################
+C     USER CHOICE                                            END
+C     ###########################################################
 
+
+        
 *********************************
 * Initialization
 *********************************	
-	icase = 0
-	call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,x,s,si,
-     &        Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1n,f2n,sun,icase,lc,lbj)
-
-        x = 0.0
 
         iu = 77
         write (filename, '( "ed_semi_eic",I2,".dat" )' )  iu
@@ -56,12 +74,29 @@ c  fsgen 100K event generated.....fora moment
         OPEN(unit=99,file='gn_ed_eic.input', status='old',
      &       ACTION='READ')
 
+c      Misak's Cross-section model (IA) ............. LC/VN
+c      initialization edenx function.........
+        IF(imodel.eq.1)THEN
+           icase = 0
+           call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,x,s,si,
+     &          Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1n,f2n,sun,icase,lc,lbj)
+           x = 0.0
+        ELSE IF(imodel.eq.2)THEN
+C     ...KINEMATIC LIMIT IN TPRIME, ABSOLUTE AND FOR GIVEN ALPHAR
+           CALL TPMIN(TP0, 1.D0, 0)
+           CALL TPMIN(TP1,  alpha_r, 1)
+           IF(IPN.eq.3)THEN
+              call JR14NLO08SFinit
+           ENDIF
+      ENDIF
+
 
 c if more than 99999 causes the memory problem...
          DO ll=1,99999
+c         DO ll=10,20
 
            read (99,*) h1,h2,
-     &           h(1),h(2),h(3),h(4),h(5),h(6),h(7)
+     &           h(1),h(2),h(3),h(4),h(5),h(6),h(7),h(8)
 
            read (99,*) ee(1),ee(2),ee(3),ee(4),ee(5),ee(6)
      &          ,ee(7),ee(8),ee(9),ee(10),ee(11)
@@ -77,7 +112,7 @@ c if more than 99999 causes the memory problem...
 
 c      igen = daughter particle (2nd generation)
 
-        DO iv=1,7
+        DO iv=1,8
            hvec0(iv) =  h(iv)
         ENDDO
 
@@ -88,6 +123,7 @@ c      igen = daughter particle (2nd generation)
         xinv_alpha  = hvec0(5) 
         xinv_pRT    = hvec0(6) 
         xinv_tprim  = hvec0(7) 
+        xinv_jacob  = hvec0(8) 
 
 
 c     electron --------------------- trigger
@@ -127,7 +163,10 @@ c     hadron 2 --------------------- anything dummy hadron X
         ve_x = evec1(6)
         ve_y = evec1(7)
         ve_z = evec1(8)
-        q0   = ei - pe
+c        q0   = ei - pe
+        q0  = 2*xinv_q2/2/dm/xinv_xbj
+
+
 c theta_e unit : radian
         th_e = acos(evec1(3)/pe)
 c fsgen : Q2 range set 0. - 10.GeV2
@@ -184,6 +223,11 @@ c---------------------------------------------------------------
         
         pf_cm_mag=sqrt(dot(pfscm,pfscm))
 
+        
+c
+c p_n = (P_D - p_S)  as a four-vector, then compute  p_n^2  = t
+c compare this event-by-event with
+c M_D^2 + M^2 - 2*P_D \cdot p_S = t
 
 
 c dm**2-2.0*dm*e_r+pm**2+2.0*(dm-e_r)*q0 + 2.0*pr*qv*cos(thr)-q2
@@ -252,55 +296,39 @@ c Misak's definition
          vmdum  = sqrt(vmdum2)
 
 
-c tprime has + sign (for convenience in plot)
-c         tprime_KJ =  -(t_chn_MK - t_min_MK)
-c$$$         tprime_KJ =  2*p_r**2
          tprime_KJ =  xinv_tprim
          t_chn_MK = tprime_KJ + pm**2
 
-cccccc    F2D with free nucleon -> ./hbook_f2df/
 
-c$$$         alpha_r0=1
-c$$$         p_rt0 =0
-c$$$        call edenx(se,sq,q2,q0,ktr,alpha_r0,p_rt0,x,s,si0,
-c$$$     &       Fd_L,Fd_T,Fd_TL,Fd_TT,f2d0,f1eff,f2eff,sun,icase,lc,lbj)
 
-cccccc    F2D  -> ./hbook_f2d/
-c$$$        call edenx(se,sq,q2,q0,ktr,alpha_r,p_rt,x,s,si,
-c$$$     &       Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
+        IF(imodel.eq.1)THEN
 
-c$$$  variable definition at the beginning
-c$$$        xinv_xbj    = hvec0(1) 
-c$$$        xinv_q2     = hvec0(2) 
-c$$$        xinv_se     = hvec0(3) 
-c$$$        xinv_sq     = hvec0(4) 
-c$$$        xinv_alpha  = hvec0(5) 
-c$$$        xinv_pRT    = hvec0(6) 
-c$$$        xinv_tprim    = hvec0(7) 
-c$$$
-        call edenx(xinv_se,xinv_sq,xinv_q2,q0,ktr,xinv_alpha,xinv_pRT,
-     & x,s,si,Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
+          call edenx(xinv_se,xinv_sq,xinv_q2,q0,ktr,xinv_alpha,xinv_pRT,
+     &    x,s,si,Fd_L,Fd_T,Fd_TL,Fd_TT,f2d,f1eff,f2eff,sun,icase,lc,lbj)
 
+c          print *,xinv_se,xinv_sq,xinv_xbj,xinv_q2,q0
 
         icon =1
         thetr =  theta_qp
         phir =  phi_qp
-        call spectral_un(q0,qv_mag,p_r,thetr,phir,1,E_r,sun,lc,1)
-
-c	subroutine  spectral_un(q0,qv,pr,thr,phir,ktr,tr,sun,lc,icon)
-*******************************************************************
+CCC----	subroutine  spectral_un(q0,qv,pr,thr,phir,ktr,tr,sun,lc,icon)
+       call spectral_un(q0,qv_mag,p_r,thetr,phir,1,E_r,sun,lc,1)        
+c*******************************************************************
 *         Spectral Function
 *         q0 - virtual photon energy
 *         qv - virtual photon momentum
 *         pr - recoil nucleon momentum
 *         thr - recoil nucleon polar angle vs q
 *         phir - recoil nucleon azimuthal angle
-*         ktr - type of the recoil nucleon 1- proton -1 - neutron
+*         ktr - type of the recoil nucleon (1):proton, (-1):neutron 
+* ------------- (IPN for Weiss code (2):proton, (1):neutron )
 *         tr  - recoil nucleons kinetic energy
 *         sun  - spectral function 
 *         lc  - 0 virtual nucleon, 1 light cone  approximation
 *         icon- 0-initialization, 1 PWIA, 2 - FSI, 12- PWIA+FSI
 ********************************************************************
+
+
 c     wave function with Paris potential
         CC =0.3939
 c     wave function with Bonn potential
@@ -318,7 +346,7 @@ c        CC =0.3930
         xstar2 = x/alpha_r
 
 
-        if(sqrt(se).gt.0.0)then
+        if(sqrt(xinv_se).gt.0.0)then
            if(si.gt.0 .and. tprime_KJ.gt.0)then
 
 
@@ -329,11 +357,18 @@ c        CC =0.3930
               spect = tprime_KJ**2/(E_r*ResPot*xnn)
             
 c              crs1 = si/fac
-              crs1 = si
-              crs  = si*spect/fac
+c              xjacobian = xinv_xbj/E_r
+              xjacobian = xinv_jacob
+
+              crs0 = si
+              crs1 = si*xjacobian
+              crs2  = si*spect/fac
               dum2 =0.
 
-c$$$
+
+
+c$$$  INPUT for the GEMC format........................
+c$$$c XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  
 c$$$c     xinv_se,xinv_sq,xinv_q2,q0,ktr,xinv_alpha,xinv_pRT,
 c$$$
 c$$$              write(iu,10) nptl,ntgt,nproton,
@@ -346,32 +381,151 @@ c$$$c     remove for the GEMC simulation input
 c$$$             write(iu,11) xgen,xcharge,pid2,P_v_x,P_v_y,P_v_z,xE_v,
 c$$$     &             xM_v,V_v_x,V_v_y,V_v_z
 c$$$ 
+c$$$c XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  
+c
 
+c     dummy variable re-assign
+              wn=1
+              xmx2 =1
 
               write(iu,10) xinv_xbj,xinv_q2,xinv_pRT,xinv_alpha,
      &             si,p_x2,e_x,xmx2,wn,
-     &             xinv_tprim,t_chn_MK,theta_qp,crs1,crs,
+     &             xinv_tprim,t_chn_MK,theta_qp,crs1,crs2,
      &             p_rx,p_ry,p_rz,yy
-
-
-
-
-           endif
+ 
+          endif
         endif
 
 
- 10     format(18(f19.7,','))
-
-
+c$$$  INPUT for the GEMC format........................
+c$$$c XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  
 c$$$
 c$$$ 10     format('      ',I2,'  ',I2,'  ',I2,'  ',f10.4,'  ',
-c$$$     &       f10.4,'  ',f10.4,'  ',f10.4,'  ',e10.3,'  ',e9.3,'  ',e9.3)
+c$$$     &       f12.6,'  ',f12.6,'  ',f12.6,'  ',e14.8,'  ',e14.8,'  ',e14.8)
 c$$$ 
 c$$$ 11    format('   ',I2,'   ',I2,'  1   ','   ',I4,'   0   ','   0  '
-c$$$     &       ,e10.3,'   ',e10.3,'   ',e10.3,
-c$$$     &       '  ',e10.3,'  ',e10.3,'  ',
-c$$$     &       e10.3,'  ',e10.3,'  ',e10.3)
+c$$$     &       ,e14.8,'   ',e14.8,'   ',e14.8,
+c$$$     &       '  ',e14.8,'  ',e14.8,'  ',
+c$$$     &       e14.8,'  ',e14.8,'  ',e14.8)
 c$$$
+c$$$c XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  
+
+
+
+
+
+
+
+
+        ELSE IF(imodel.eq.2)THEN
+
+
+C     ...RESIDUE OF SPECTRAL FUNCTION
+           CALL TAGRES(RES,dble(xinv_alpha))
+
+
+C     ...FREE NUCLEON STRUCTURE FUNCTION (INPUT MODEL)
+* ------------- (IPN for Weiss code (1):proton, (2):neutron )
+ 
+           CALL TAGFN(f2nn,dble(xinv_xbj),dble(xinv_q2),IPN)
+CCC           print *,f2nn,IPN
+
+
+C    ...CALCULATE PTR
+C
+c$$$            PR2 = (TP0 - TP)/2
+c$$$            ER  = SQRT(PR2 + UN**2)
+c$$$            PRZ = ALR*UD/2 - ER
+c$$$            PTR = SQRT(PR2 - PRZ**2)
+C
+
+         CALL TAGX(FSIG,
+     &          dble(xinv_se),dble(xinv_xbj),dble(xinv_q2),
+     &          dble(xinv_alpha),dble(xinv_pRT),IPN)
+C
+            E_recoil= sqrt(dble(xinv_tprim)/2+mprot**2)
+       PHASR = PI*UD/4./dble(E_recoil)*dble(xinv_tprim)*dble(xinv_alpha)
+C     
+            ULUMI = 10E-6
+            UNUM = ULUMI*dble(xinv_xbj)*dble(xinv_q2)*FSIG *PHASR
+C
+C    ...TAGGED STRUCTURE FUNCTION
+C
+            CALL TAGFD(F2D,
+     &           dble(xinv_xbj),dble(xinv_q2),
+     &           dble(xinv_alpha),dble(xinv_pRT),2)
+C
+C     ...SPECTRAL FUNCTION AND POLE PART
+C
+            CALL TAGSP(S,dble(xinv_alpha),dble(xinv_pRT))
+C
+         SPOL = RES/(dble(xinv_tprim))**2 
+         F2DExt =F2D/SPOL
+
+         si = FSIG
+c         print *,xinv_se,xinv_tprim,si
+
+       if(sqrt(xinv_se).gt.0.0)then
+           if(si.gt.0 .and. xinv_tprim.gt.0)then
+
+c              xjacobian = xinv_xbj/E_r
+              xjacobian = xinv_jacob
+
+              xkjfac = xinv_xbj/E_r/(xinv_tprim**(1/4.5))/2.62
+
+
+
+              CALL TPMIN(xinv_tpmin,dble(xinv_alpha),1)
+
+c     factor of 2 should be remove later because I corrected the original C++ source code
+
+              crs0 = FSIG
+              crs1 = FSIG*dble(xinv_xbj)/E_recoil
+     &             /(dble(xinv_tprim)**(1/4.5))/2.62
+              crs2 = FSIG*dble(xinv_xbj)
+     &             /sqrt(dble(xinv_tprim)/2+mprot**2)
+
+              dum2 =0.
+
+
+c              print *,xjacobian,xinv_jacob
+
+c$$$  INPUT for the GEMC format........................
+c$$$c XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  
+c$$$c     xinv_se,xinv_sq,xinv_q2,q0,ktr,xinv_alpha,xinv_pRT,
+c$$$
+c$$$              write(iu,10) nptl,ntgt,nproton,
+c$$$     &             x,xinv_q2,xinv_alpha,xinv_pRT,tprime_KJ,crs1,dum2
+c$$$              write(iu,11) egen,echarge,pid,pe_x,pe_y,pe_z,pe_E,pe_M,
+c$$$     &             ve_x,ve_y,ve_z
+c$$$              write(iu,11) sgen,scharge,pid1,p_rx,p_ry,p_rz,E_r,pm,
+c$$$     &             v_rx,v_ry,v_rz
+c$$$c     remove for the GEMC simulation input
+c$$$             write(iu,11) xgen,xcharge,pid2,P_v_x,P_v_y,P_v_z,xE_v,
+c$$$     &             xM_v,V_v_x,V_v_y,V_v_z
+c$$$ 
+c$$$c XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  
+c
+
+c     dummy variable re-assign
+              wn=1
+              xmx2 =1
+
+              write(iu,10) xinv_xbj,xinv_q2,xinv_pRT,xinv_alpha,
+     &             FSIG,p_x2,e_x,xjacobian,xkjfac,
+     &             xinv_tprim,t_chn_MK,theta_qp,crs1,crs2,
+     &             p_rx,p_ry,p_rz,crs0
+
+          endif
+        endif
+
+
+
+         ENDIF
+C
+
+
+ 10     format(18(e16.8,','))
 
         ENDDO
 
@@ -520,8 +674,6 @@ C
 C 
       RETURN    
       END   
-
-
 
 
 
@@ -891,76 +1043,6 @@ C
 	end
 	
 
-	
-
-
-
-
-*	program test
-*	pi = acos(-1.0)
-*	pm  = 0.938279
-*        dm  = 1.875628
-*        pmp = pm
-*        pmn = 0.939565  
-*	eb  = 0.0022245
-*        fmgev = 0.197327
-*	icon = 0
-*	call spectral_un(q0,qv,pr,thr,phir,ktr,tr,sun,lc,icon)
-
-*	lc  = 0
-*	q2 = 4.0
-*	x  = 0.5
-*	q0 = q2/2.0/pm/x
-*	qv = sqrt(q2 + q0**2)
-
-	
-*	ktr  = 1
-*	thr  = 0.0
-*	phir = pi
-
-*        tpr = 0.0001
-*        Tr  = (tpr-eb*(pmn-pm))/(2.0*dm) -eb/2.0
-
-*        pr = 0.0
-*        if(Tr.ge.0.0)pr = sqrt((pm+Tr)**2-pm**2)
-
-
-*************************************************************
-*       Fetching Factor
-*************************************************************
-*        c1    = 2.0*0.88688076 *sqrt(fmgev) 
-*        res   = c1/(sqrt(2.0)*pi)
-
-*	E_r = sqrt(pm**2+pr**2)
-**	fct0 = e_r * dm/(2.0*(dm-e_r))
-
-*        fetch = tpr**2/res**2/E_r
-
-
-**	pt = 0.2
-	
-**	do ials = 0,0
-**	als = 1.0 + float(ials)/20.0
-**	prz = (pm**2 + pt**2 - als**2*pm**2)/(2.0*als*pm)
-**	pr  = sqrt(pt**2 + prz**2)
-**	thr = 0.0
-**	if(pr.gt.0.0)then
-**	thr = acos(prz/pr)
-**	endif
-
-*	icon = 1
-
-*	call spectral_un(q0,qv,pr,thr,phir,ktr,Tr,s,lc,icon)	
-
-**	write(6, 10)als,pr,s0,s
-**	write(12,10)als,pr,s0,s
-*	check = fetch*s
-*        print *,s0,check,alog(tpr),tpr,Tr,pr 
-	
-**	print *,q2,q0,qv
-* 10	format(2f12.3,2e12.3)
-**	enddo
-*	end
 
 	subroutine  spectral_un(q0,qv,pr,thr,phir,ktr,tr,sun,lc,icon)
 *******************************************************************
@@ -3017,59 +3099,745 @@ C.......................................................................
 
 
 
-c$$$   +++++ this is F77 intrinsic function +++++++
-c$$$      SUBROUTINE SRAND(ISEED)
-c$$$C
-c$$$C  This subroutine sets the integer seed to be used with the
-c$$$C  companion RAND function to the value of ISEED.  A flag is 
-c$$$C  set to indicate that the sequence of pseudo-random numbers 
-c$$$C  for the specified seed should start from the beginning.
-c$$$C
-c$$$      COMMON /SEED/JSEED,IFRST
-c$$$C
-c$$$      JSEED = ISEED
-c$$$      IFRST = 0
-c$$$C
-c$$$      RETURN
-c$$$      END
-c$$$      REAL FUNCTION RAND()
-c$$$C
-c$$$C  This function returns a pseudo-random number for each invocation.
-c$$$C  It is a FORTRAN 77 adaptation of the "Integer Version 2" minimal 
-c$$$C  standard number generator whose Pascal code appears in the article:
-c$$$C
-c$$$C     Park, Steven K. and Miller, Keith W., "Random Number Generators: 
-c$$$C     Good Ones are Hard to Find", Communications of the ACM, 
-c$$$C     October, 1988.
-c$$$C
-c$$$      PARAMETER (MPLIER=16807,MODLUS=2147483647,MOBYMP=127773,
-c$$$     +           MOMDMP=2836)
-c$$$C
-c$$$      COMMON  /SEED/JSEED,IFRST
-c$$$      INTEGER HVLUE, LVLUE, TESTV, NEXTN
-c$$$      SAVE    NEXTN
-c$$$C
-c$$$      IF (IFRST .EQ. 0) THEN
-c$$$        NEXTN = JSEED
-c$$$        IFRST = 1
-c$$$      ENDIF
-c$$$C
-c$$$      HVLUE = NEXTN / MOBYMP
-c$$$      LVLUE = MOD(NEXTN, MOBYMP)
-c$$$      TESTV = MPLIER*LVLUE - MOMDMP*HVLUE
-c$$$      IF (TESTV .GT. 0) THEN
-c$$$        NEXTN = TESTV
-c$$$      ELSE
-c$$$        NEXTN = TESTV + MODLUS
-c$$$      ENDIF
-c$$$      RAND = REAL(NEXTN)/REAL(MODLUS)
-c$$$C
-c$$$      RETURN
-c$$$      END
-c$$$      BLOCKDATA RANDBD
-c$$$      COMMON /SEED/JSEED,IFRST
-c$$$C
-c$$$      DATA JSEED,IFRST/123456789,0/
-c$$$C
-c$$$      END
 
+
+*DECK TPMIN
+      SUBROUTINE TPMIN(TP, ALR, ILIM)
+C
+C     KINEMATIC LIMIT OF TPRIME
+C
+C     ILIM = 0:  ABSOLUTE LIMIT, CORRESPONDS TO ALPHAR = 2*MN/MD
+C            1:  LIMIT FOR FIXED ALPHAR
+C
+C     TP IS THE TRUE (NEGATIVE) VALUE OF TPRIME
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+C
+      PARAMETER (UN = 0.939D0, ED = 0.00222, UD = 2*UN - ED)
+C
+      TP = -2*ED*UN + ED**2/2.
+      IF (ILIM.EQ.1) TP = TP - 2*(ALR*UD/4. - UN**2/ALR/UD)**2
+C
+      END
+C
+C---------------------------------------------------------------------
+C
+*DECK TAGX
+      SUBROUTINE TAGX(FSIG, SED, XXX, QQ, ALR, PTR, IPN)
+C
+C     DEUTERON TAGGED ELECTROPRODUCTION CROSS SECTION
+C
+C     FSIG  TAGGED ELECTROPRODUCTION CROSS SECTION
+C           DSIGMA = FSIG *DX *DQ**2 *(D**3 PR/ER)
+C
+C           DIMENSION OF DSIGMA IS NANOBARN
+C               ''       FSIG      NANOBARN/GEV**4
+C
+C     SED   ELECTRON-DEUTERON S-INVARIANT (SQUARED CM ENERGY)
+C     X     NUCLEON SCALING VARIABLE X = 2*XD
+C     QQ    4-MOMENTUM TRANSFER Q**2
+C     ALR   RECOIL MOMENTUM, LC FRACTION 
+C     PTR   RECOIL MOMENTUM, TRANSVERSE
+C
+C     IPN = 1   PROTON  ACTIVE, NEUTRON TAGGED
+C           2   NEUTRON ACTIVE, PROTON  TAGGED
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+C
+      PARAMETER (PI = 0.31415 92653 58979 D+01)
+C
+C     ...FINE STRUCTURE CONSTANT
+C
+      PARAMETER (ALEM = 1.D0/137.D0)
+C
+C     ...NUCLEON AND DEUTERON MASS
+C        UN   AVERAGE NUCLEON MASS (M(PROTON) + M(NEUTRON))/2   
+C        ED   DEUTERON BINDING ENERGY
+C        DEUTERON MASS CALCULATED AS  2*UN - ED
+C
+      PARAMETER (UN = 0.939D0, ED = 0.00222, UD = 2*UN - ED)
+C
+C     ...CONVERSION FACTOR FOR CROSS SECTION UNITS
+C        1/GEV**2  =  0.398 *10**6  NANOBARN
+C
+      PARAMETER (CONVNB = 0.389D6)
+C
+      XD   = XXX/2
+C
+      Y    = QQ/XD/(SED - UD**2)
+C
+      CORR = (Y*XD*UD)**2/QQ 
+      EPS  = (1 - Y - CORR)/(1 - Y + Y**2/2 + CORR) 
+C
+C     ...FACTOR FOR ELECTROPRODUCTION CROSS SECTION
+C        EXTRA FACTOR 1/2 FROM DIFFERENTIAL DXD = DX/2 
+C        CONVERSION GEV**(-2) TO NANOBARN
+C
+      FAC  = 2*PI *ALEM**2 *Y**2 /QQ**2 /(1 - EPS)
+      FACD = FAC /2.D0 *CONVNB
+C
+C     ...STRUCTURE FUNCTIONS
+C
+      CALL TAGFD(F2D, XXX, QQ, ALR, PTR, IPN)
+C
+C     ...CROSS SECTION
+C
+      FSIG = FACD*(F2D/XD)
+C
+      END
+C
+C---------------------------------------------------------------------
+C
+C
+*DECK TAGSP
+      SUBROUTINE TAGSP(S, ALR, PTR)
+C
+C     DEUTERON LIGHT-CONE SPECTRAL FUNCTION
+C     NORMALIZED SUCH THAT  INTEGRAL (D ALR/ALR) (D**2 PTR) S = 1
+C
+C     ALR   RECOIL MOMENTUM, LC FRACTION 
+C     PTR   RECOIL MOMENTUM, TRANSVERSE
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+      PARAMETER (UN = 0.939D0)
+C
+C     ...EFFECTIVE CM MOMENTUM
+C
+      P = SQRT((PTR**2 + UN**2)/ALR/(2 - ALR) - UN**2)
+C
+C     ...SPECTRAL FUNCTION
+C
+      CALL TAGWF(PSI, P)
+C
+      S = SQRT(P**2 + UN**2) *PSI**2 /(2 - ALR)
+C
+      END
+C
+C---------------------------------------------------------------------
+C
+      SUBROUTINE TAGRES(RES, ALR)
+C
+C     PACKAGE TAG -- DEUTERON DIS WITH SPECTATOR TAGGING
+C     AUTHOR C. WEISS (WEISS.AT.JLAB.ORG)
+C
+C     USER-DEFINED ROUTINE
+C     DEUTERON LIGHT-CONE SPECTRAL FUNCTION
+C     RESIDUE AT NUCLEON POLE TPRIME = 0
+C     S = RES/(-TPRIME)**2 + LESS SINGULAR
+C
+C     INPUT:
+C     ALR    RECOIL MOMENTUM LIGHT-CONE FRACTION ALPHAR
+C
+C     OUTPUT:
+C     RES    RESIDUE OF SPECTRAL FUNCTION (GEV UNITS)
+C
+C     V1 13MAY14
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+      PARAMETER (PI = 0.31415 92653 58979 D+01)
+      PARAMETER (UN = 0.939D0)
+C
+C     ...HULTHEN WAVE FUNCTION
+C
+      A = 0.045647
+      B = 0.2719
+C
+      C = PI**2*(A - B)**2/A/B/(A + B)
+C
+      EPOL = SQRT(-A**2 + UN**2)
+C
+C     ...RESIDUE
+C
+      RES = 4*EPOL/C/ALR
+C
+      END
+C
+      SUBROUTINE TAGFN(F2NN, XXX, QQ, IPN)
+C
+C     PACKAGE TAG -- DEUTERON DIS WITH SPECTATOR TAGGING
+C     AUTHOR C. WEISS (WEISS.AT.JLAB.ORG)
+C
+C     USER-DEFINED ROUTINE
+C     NUCLEON STRUCTURE FUNCTION F2
+C
+C     INPUT:
+C     X     X VARIABLE FOR NUCLEON
+C     QQ    Q2 (GEV**2)
+C     IPN   SWITCH: 1  PROTON, 2  NEUTRON
+C
+C     OUTPUT:
+C     F2    NUCLEON STRUCTURE FUNCTION F2
+C
+C     V1 13MAY14
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+C
+
+      double precision JR14NLO08SFF2n
+      double precision F2n(0:38),eF2n
+      integer set
+
+C     ...QUARK CHARGES
+C
+      EU   =  0.6666666666666D0
+      ED   = -0.3333333333333D0
+      ES   = -0.3333333333333D0
+C
+C     ...GRV98 PDF PARAMETRIZATION
+C
+      ISET = 1
+      CALL GRV98PA(ISET, XXX, QQ, UV, DV, US, DS, SS, GL)
+
+C
+      IF (IPN.EQ.1)      THEN
+         F2NN = EU**2*(UV + 2*US)
+     *      + ED**2*(DV + 2*DS)
+     *      + ES**2*(     2*SS)
+      ELSE IF (IPN.EQ.2) THEN
+         F2NN = EU**2*(DV + 2*DS)
+     *      + ED**2*(UV + 2*US)
+     *      + ES**2*(     2*SS)
+      ELSE IF (IPN.EQ.3) THEN
+c     Pedro Jimenez-Delgado
+         do set = 0,38
+            F2n(set) = JR14NLO08SFF2n(XXX,QQ,set)
+         enddo
+         F2NN = F2n(0)
+c$$$         eF2n = dsqrt(eF2n)
+       ENDIF
+c$$$       if(IPN.eq.3)then
+c$$$          F2NN=F2NN3
+c$$$       endif
+       IF(IPN.lt.3)RETURN
+c       print *,IPN,F2NN
+C
+      END
+C
+C---------------------------------------------------------------------
+C
+
+*DECK TAGFD
+      SUBROUTINE TAGFD(F2, XXX, QQ, ALR, PTR, IPN)
+C
+C     DEUTERON TAGGED STRUCTURE FUNCTION IN IMPULSE APPROXIMATION
+C
+C     F2    TAGGED STRUCTURE FUNCTION
+C
+C     X     NUCLEON SCALING VARIABLE X = 2*XD
+C     QQ    4-MOMENTUM TRANSFER Q**2
+C     ALR   RECOIL MOMENTUM, LC FRACTION 
+C     PTR   RECOIL MOMENTUM, TRANSVERSE
+C
+C     IPN = 1   PROTON  ACTIVE, NEUTRON TAGGED
+C           2   NEUTRON ACTIVE, PROTON  TAGGED
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+C
+C     ...SPECTRAL FUNCTION
+C
+      CALL TAGSP(S, ALR, PTR)
+C
+C     ...STRUCTURE FUNCTION
+C
+      XEFF = XXX/(2 - ALR)
+C
+      CALL TAGFN(FN2, XEFF, QQ, IPN)
+C
+      F2 = S*FN2
+C
+      END
+C
+C---------------------------------------------------------------------
+
+C
+C---------------------------------------------------------------------
+C
+*DECK TAGWF
+      SUBROUTINE TAGWF(PSI, P)
+C
+C     PACKAGE TAG -- DEUTERON DIS WITH SPECTATOR TAGGING
+C     AUTHOR C. WEISS (WEISS.AT.JLAB.ORG)
+C
+C     USER-DEFINED ROUTINE
+C     DEUTERON NON-RELATIVISTIC WAVE FUNCTION PSI(P)
+C     NORMALIZED SUCH THAT   INTEGRAL (D**3 P) PSI(P)**2 = 1
+C
+C     INPUT:
+C     P    MODULUS OF 3-MOMENTUM (GEV)
+C
+C     OUTPUT:
+C     PSI  DEUTERON NON-RELATIVISTIC WAVE FUNCTION PSI(P)
+C
+C     ALL DIMENSIONFUL QUANTITIES IN GEV UNITS
+C
+C     V1 13MAY14
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+      PARAMETER (PI = 0.31415 92653 58979 D+01)
+C
+C     ...HULTHEN WAVE FUNCTION
+C
+      A = 0.045647
+      B = 0.2719
+C
+      C = PI**2*(A - B)**2/A/B/(A + B)
+C
+      PSI = (  1.D0/(P**2 + A**2)
+     *       - 1.D0/(P**2 + B**2))/SQRT(C)
+C
+      END
+C
+
+
+*DECK GRV98
+      BLOCK DATA GRV98
+C
+C     INITIALIZATION OF GRV98 PDF PARAMETRIZATION
+C
+C     NOTE: IF MULTIPLE PDF SETS ARE USED IN THE SAME RUN,
+C     THE INITIALIZATION MUST BE RESET BY THE CALLING PROGRAM.
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+C
+      COMMON /INTINIP/ IINIP
+      COMMON /INTINIF/ IINIF
+      DATA IINIP /0/
+      DATA IINIF /0/
+C
+      END
+
+C---------------------------------------------------------------------
+C
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                                                   *
+*     G R V  -  P R O T O N  - P A R A M E T R I Z A T I O N S      *
+*                                                                   *
+*                          1998 UPDATE                              *
+*                                                                   *
+*                  For a detailed explanation see                   *
+*                   M. Glueck, E. Reya, A. Vogt :                   *
+*        hep-ph/9806404  =  DO-TH 98/07  =  WUE-ITP-98-019          *
+*                  (To appear in Eur. Phys. J. C)                   *
+*                                                                   *
+*   This package contains subroutines returning the light-parton    *
+*   distributions in NLO (for the MSbar and DIS schemes) and LO;    * 
+*   the respective light-parton, charm, and bottom contributions    *
+*   to F2(electromagnetic); and the scale dependence of alpha_s.    *
+*                                                                   *
+*   The parton densities and F2 values are calculated from inter-   *
+*   polation grids covering the regions                             *
+*         Q^2/GeV^2  between   0.8   and  1.E6 ( 1.E4 for F2 )      *
+*            x       between  1.E-9  and   1.                       *
+*   Any call outside these regions stops the program execution.     *
+*                                                                   *
+*   At Q^2 = MZ^2, alpha_s reads  0.114 (0.125) in NLO (LO); the    *
+*   heavy quark thresholds, QH^2 = mh^2, in the beta function are   *
+*            mc = 1.4 GeV,  mb = 4.5 GeV,  mt = 175 GeV.            *
+*   Note that the NLO alpha_s running is different from GRV(94).    * 
+*                                                                   *
+*    Questions, comments etc to:  avogt@physik.uni-wuerzburg.de     *
+*                                                                   *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*
+*
+*
+*
+      SUBROUTINE GRV98PA (ISET, XXX, Q2, UV, DV, US, DS, SS, GL)
+*********************************************************************
+*                                                                   *
+*   THE PARTON ROUTINE.                                             *
+*                                     __                            *
+*   INPUT:   ISET =  1 (LO),  2 (NLO, MS), or  3 (NLO, DIS)         *
+*            X  =  Bjorken-x        (between  1.E-9 and 1.)         *
+*            Q2 =  scale in GeV**2  (between  0.8 and 1.E6)         *
+*                                                                   *
+*   OUTPUT:  UV = u - u(bar),  DV = d - d(bar),  US = u(bar),       *
+*            DS = d(bar),  SS = s = s(bar),  GL = gluon.            *
+*            Always x times the distribution is returned.           *
+*                                                                   *
+*   COMMON:  The main program or the calling routine has to have    *
+*            a common block  COMMON / INTINIP / IINIP , and the     *
+*            integer variable  IINIP  has always to be zero when    *
+*            GRV98PA is called for the first time or when  ISET     *
+*            has been changed.                                      *
+*                                                                   *
+*   GRIDS:   1. grv98lo.grid, 2. grv98nlm.grid, 3. grv98nld.grid,   *
+*            (1+1809 lines with 6 columns, 4 significant figures)   *
+*                                                                   *
+*******************************************************i*************
+*
+      IMPLICIT DOUBLE PRECISION (A-H, O-Z)
+      PARAMETER (NPART=6, NX=68, NQ=27, NARG=2)
+      DIMENSION XUVF(NX,NQ), XDVF(NX,NQ), XDEF(NX,NQ), XUDF(NX,NQ),
+     1          XSF(NX,NQ), XGF(NX,NQ), PARTON (NPART,NQ,NX-1), 
+     2          QS(NQ), XB(NX), XT(NARG), NA(NARG), ARRF(NX+NQ) 
+      CHARACTER*80 LINE
+      COMMON / INTINIP / IINIP
+      SAVE XUVF, XDVF, XDEF, XUDF, XSF, XGF, NA, ARRF
+*
+*...BJORKEN-X AND Q**2 VALUES OF THE GRID :
+       DATA QS / 0.8E0, 
+     1           1.0E0, 1.3E0, 1.8E0, 2.7E0, 4.0E0, 6.4E0,
+     2           1.0E1, 1.6E1, 2.5E1, 4.0E1, 6.4E1,
+     3           1.0E2, 1.8E2, 3.2E2, 5.7E2,
+     4           1.0E3, 1.8E3, 3.2E3, 5.7E3,
+     5           1.0E4, 2.2E4, 4.6E4,
+     6           1.0E5, 2.2E5, 4.6E5, 
+     7           1.E6 /
+       DATA XB / 1.0E-9, 1.8E-9, 3.2E-9, 5.7E-9, 
+     A           1.0E-8, 1.8E-8, 3.2E-8, 5.7E-8, 
+     B           1.0E-7, 1.8E-7, 3.2E-7, 5.7E-7, 
+     C           1.0E-6, 1.4E-6, 2.0E-6, 3.0E-6, 4.5E-6, 6.7E-6,
+     1           1.0E-5, 1.4E-5, 2.0E-5, 3.0E-5, 4.5E-5, 6.7E-5,
+     2           1.0E-4, 1.4E-4, 2.0E-4, 3.0E-4, 4.5E-4, 6.7E-4,
+     3           1.0E-3, 1.4E-3, 2.0E-3, 3.0E-3, 4.5E-3, 6.7E-3,
+     4           1.0E-2, 1.4E-2, 2.0E-2, 3.0E-2, 4.5E-2, 0.06, 0.08,
+     5           0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25, 0.275,
+     6           0.3, 0.325, 0.35, 0.375, 0.4,  0.45, 0.5, 0.55,
+     7           0.6, 0.65,  0.7,  0.75,  0.8,  0.85, 0.9, 0.95, 1. /
+*
+*...CHECK OF X AND Q2 VALUES : 
+      IF ( (XXX.LT.0.99D-9) .OR. (XXX.GT.1.D0) ) THEN
+         WRITE(6,91) 
+  91     FORMAT (2X,'PARTON INTERPOLATION: X OUT OF RANGE')
+         STOP
+      ENDIF
+      IF ( (Q2.LT.0.799) .OR. (Q2.GT.1.01E6) ) THEN
+         WRITE(6,92) 
+  92     FORMAT (2X,'PARTON INTERPOLATION: Q2 OUT OF RANGE')
+         STOP
+      ENDIF
+      IF (IINIP .NE. 0) GOTO 16
+*
+*...INITIALIZATION, IF REQUIRED :
+*
+*    SELECTION AND READING OF THE GRID : 
+*    (COMMENT: FIRST NUMBER IN THE FIRST LINE OF THE GRID)
+      IF (ISET .EQ. 1) THEN
+        OPEN (11,FILE='grv98lo.grid',STATUS='old')   ! 7.332E-05
+      ELSE IF (ISET .EQ. 2) THEN
+        OPEN (11,FILE='grv98nlm.grid',STATUS='old')  ! 1.015E-04
+      ELSE IF (ISET .EQ. 3) THEN
+        OPEN (11,FILE='grv98nld.grid',STATUS='old')  ! 1.238E-04
+      ELSE
+        WRITE(6,93)
+  93    FORMAT (2X,'NO OR INVALID PARTON SET CHOICE')
+        STOP
+      END IF
+      IINIP = 1
+      READ(11,89) LINE
+  89  FORMAT(A80)
+      DO 15 M = 1, NX-1 
+      DO 15 N = 1, NQ
+      READ(11,90) PARTON(1,N,M), PARTON(2,N,M), PARTON(3,N,M), 
+     1            PARTON(4,N,M), PARTON(5,N,M), PARTON(6,N,M) 
+  90  FORMAT (6(1PE10.3))
+  15  CONTINUE
+      CLOSE(11)
+*
+*....ARRAYS FOR THE INTERPOLATION SUBROUTINE :
+      DO 10 IQ = 1, NQ
+      DO 20 IX = 1, NX-1
+        XB0V = XB(IX)**0.5 
+        XB0S = XB(IX)**(-0.2) 
+        XB1 = 1.-XB(IX)
+        XUVF(IX,IQ) = PARTON(1,IQ,IX) / (XB1**3 * XB0V)
+        XDVF(IX,IQ) = PARTON(2,IQ,IX) / (XB1**4 * XB0V)
+        XDEF(IX,IQ) = PARTON(3,IQ,IX) / (XB1**7 * XB0V) 
+        XUDF(IX,IQ) = PARTON(4,IQ,IX) / (XB1**7 * XB0S)
+        XSF(IX,IQ)  = PARTON(5,IQ,IX) / (XB1**7 * XB0S)
+        XGF(IX,IQ)  = PARTON(6,IQ,IX) / (XB1**5 * XB0S)
+  20  CONTINUE
+        XUVF(NX,IQ) = 0.E0
+        XDVF(NX,IQ) = 0.E0
+        XDEF(NX,IQ) = 0.E0
+        XUDF(NX,IQ) = 0.E0
+        XSF(NX,IQ)  = 0.E0
+        XGF(NX,IQ)  = 0.E0
+  10  CONTINUE  
+      NA(1) = NX
+      NA(2) = NQ
+      DO 30 IX = 1, NX
+        ARRF(IX) = DLOG(XB(IX))
+  30  CONTINUE
+      DO 40 IQ = 1, NQ
+        ARRF(NX+IQ) = DLOG(QS(IQ))
+  40  CONTINUE
+*
+*...CONTINUATION, IF INITIALIZATION WAS DONE PREVIOUSLY.
+*
+  16  CONTINUE
+*
+*...INTERPOLATION :
+      XT(1) = DLOG(XXX)
+      XT(2) = DLOG(Q2)
+      X1 = 1.- XXX
+      XV = XXX**0.5
+      XS = XXX**(-0.2)
+      UV = FINT(NARG,XT,NA,ARRF,XUVF) * X1**3 * XV
+      DV = FINT(NARG,XT,NA,ARRF,XDVF) * X1**4 * XV
+      DE = FINT(NARG,XT,NA,ARRF,XDEF) * X1**7 * XV
+      UD = FINT(NARG,XT,NA,ARRF,XUDF) * X1**7 * XS
+      US = 0.5 * (UD - DE)
+      DS = 0.5 * (UD + DE)
+      SS = FINT(NARG,XT,NA,ARRF,XSF)  * X1**7 * XS
+      GL = FINT(NARG,XT,NA,ARRF,XGF)  * X1**5 * XS 
+*
+ 60   RETURN
+      END
+*
+*
+*
+*
+      SUBROUTINE GRV98F2 (ISET, XXX, Q2, F2L, F2C, F2B, F2)
+*********************************************************************
+*                                                                   *
+*   THE F2 ROUTINE.                                                 *
+*                                                                   *
+*   INPUT :  ISET = 1 (LO),  2 (NLO).                               *
+*            X  =  Bjorken-x        (between  1.E-9 and 1.)         *
+*            Q2 =  scale in GeV**2  (between  0.8 and 1.E4)         *
+*                                                                   *
+*   OUTPUT:  F2L = F2(light), F2C = F2(charm), F2B = F2(bottom,)    *
+*            F2  = sum, all given for electromagnetic proton DIS.   *
+*                                                                   *
+*   COMMON:  The main program or the calling routine has to have    *
+*            a common block  COMMON / INTINIF / IINIF , and the     *
+*            integer variable  IINIF  has always to be zero when    *
+*            GRV98F2 is called for the first time or when  ISET     *
+*            has been changed.                                      *
+*                                                                   *
+*   GRIDS:   1. grv98lof.grid, 2. grv98nlf.grid.                    *
+*            (1+1407 lines with 3 columns, 4 significant figures)   *
+*                                                                   *
+*******************************************************i*************
+*
+      IMPLICIT DOUBLE PRECISION (A-H, O-Z)
+      PARAMETER (NSTRF=3, NX=68, NQ=21, NARG=2)
+      DIMENSION XF2LF(NX,NQ), XF2CF(NX,NQ), XF2BF(NX,NQ), 
+     1          STRFCT (NSTRF,NQ,NX-1), QS(NQ), XB(NX), 
+     3          XT(NARG), NA(NARG), ARRF(NX+NQ) 
+      CHARACTER*80 LINE
+      COMMON / INTINIF / IINIF
+      SAVE XF2LF, XF2CF, XF2BF, NA, ARRF
+*
+*...BJORKEN-X AND Q**2 VALUES OF THE GRID :
+       DATA QS / 0.8E0, 
+     1           1.0E0, 1.3E0, 1.8E0, 2.7E0, 4.0E0, 6.4E0,
+     2           1.0E1, 1.6E1, 2.5E1, 4.0E1, 6.4E1,
+     3           1.0E2, 1.8E2, 3.2E2, 5.7E2,
+     4           1.0E3, 1.8E3, 3.2E3, 5.7E3,
+     5           1.0E4/ 
+       DATA XB / 1.0E-9, 1.8E-9, 3.2E-9, 5.7E-9, 
+     A           1.0E-8, 1.8E-8, 3.2E-8, 5.7E-8, 
+     B           1.0E-7, 1.8E-7, 3.2E-7, 5.7E-7, 
+     C           1.0E-6, 1.4E-6, 2.0E-6, 3.0E-6, 4.5E-6, 6.7E-6,
+     1           1.0E-5, 1.4E-5, 2.0E-5, 3.0E-5, 4.5E-5, 6.7E-5,
+     2           1.0E-4, 1.4E-4, 2.0E-4, 3.0E-4, 4.5E-4, 6.7E-4,
+     3           1.0E-3, 1.4E-3, 2.0E-3, 3.0E-3, 4.5E-3, 6.7E-3,
+     4           1.0E-2, 1.4E-2, 2.0E-2, 3.0E-2, 4.5E-2, 0.06, 0.08,
+     5           0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25, 0.275,
+     6           0.3, 0.325, 0.35, 0.375, 0.4,  0.45, 0.5, 0.55,
+     7           0.6, 0.65,  0.7,  0.75,  0.8,  0.85, 0.9, 0.95, 1. /
+*
+*...CHECK OF X AND Q2 VALUES : 
+      IF ( (XXX.LT.0.99D-9) .OR. (XXX.GT.1.D0) ) THEN
+         WRITE(6,91) 
+  91     FORMAT (2X,'STR.FCT. INTERPOLATION: X OUT OF RANGE')
+         STOP
+      ENDIF
+      IF ( (Q2.LT.0.799) .OR. (Q2.GT.1.01E4) ) THEN
+         WRITE(6,92) 
+  92     FORMAT (2X,'STR.FCT. INTERPOLATION: Q2 OUT OF RANGE')
+         STOP
+      ENDIF
+      IF (IINIF .NE. 0) GOTO 16
+*
+*...INITIALIZATION, IF REQUIRED :
+*
+*    SELECTION AND READING OF THE GRID : 
+*    (COMMENT: FIRST NUMBER IN THE FIRST LINE OF THE GRID)
+      IF (ISET .EQ. 1) THEN
+        OPEN (11,FILE='grv98lof.grid',STATUS='old')  !  7.907E-01
+      ELSE IF (ISET.EQ.2) THEN
+        OPEN (11,FILE='grv98nlf.grid',STATUS='old')  !  9.368E-01
+      ELSE
+        WRITE(6,93)
+  93    FORMAT (2X,'NO OR INVALID STR.FCT. SET CHOICE')
+        STOP
+      END IF
+      IINIF = 1
+      READ(11,89) LINE
+  89  FORMAT(A80)
+      DO 15 M = 1, NX-1 
+      DO 15 N = 1, NQ
+      READ(11,90) STRFCT(1,N,M), STRFCT(2,N,M), STRFCT(3,N,M) 
+  90  FORMAT (3(1PE10.3))
+  15  CONTINUE
+      CLOSE(11)
+*
+*....ARRAYS FOR THE INTERPOLATION SUBROUTINE :
+      DO 10 IQ = 1, NQ
+      DO 20 IX = 1, NX-1
+        XBS = XB(IX)**0.2 
+        XB1 = 1.-XB(IX)
+        XF2LF(IX,IQ) = STRFCT(1,IQ,IX) / XB1**3 * XBS
+        XF2CF(IX,IQ) = STRFCT(2,IQ,IX) / XB1**7 * XBS
+        XF2BF(IX,IQ) = STRFCT(3,IQ,IX) / XB1**7 * XBS 
+  20  CONTINUE
+        XF2LF(NX,IQ) = 0.E0
+        XF2CF(NX,IQ) = 0.E0
+        XF2BF(NX,IQ) = 0.E0
+  10  CONTINUE  
+      NA(1) = NX
+      NA(2) = NQ
+      DO 30 IX = 1, NX
+        ARRF(IX) = DLOG(XB(IX))
+  30  CONTINUE
+      DO 40 IQ = 1, NQ
+        ARRF(NX+IQ) = DLOG(QS(IQ))
+  40  CONTINUE
+*
+*...CONTINUATION, IF INITIALIZATION WAS DONE PREVIOUSLY.
+*
+  16  CONTINUE
+*
+*...INTERPOLATION :
+      XT(1) = DLOG(XXX)
+      XT(2) = DLOG(Q2)
+      X1 = 1.- XXX
+      XS = XXX**(-0.2)
+      F2L = FINT(NARG,XT,NA,ARRF,XF2LF) * X1**3 * XS
+      F2C = FINT(NARG,XT,NA,ARRF,XF2CF) * X1**7 * XS
+      F2B = FINT(NARG,XT,NA,ARRF,XF2BF) * X1**7 * XS
+      F2  = F2L + F2C + F2B
+*
+ 60   RETURN
+      END
+*
+*
+*
+*
+      FUNCTION FINT(NARG,ARG,NENT,ENT,TABLE)
+*********************************************************************
+*                                                                   *
+*   THE INTERPOLATION ROUTINE (CERN LIBRARY ROUTINE E104)           *
+*                                                                   *
+*********************************************************************
+      IMPLICIT DOUBLE PRECISION (A-H, O-Z)
+      DIMENSION ARG(5),NENT(5),ENT(10),TABLE(10)
+      DIMENSION D(5),NCOMB(5),IENT(5)
+      KD=1
+      M=1
+      JA=1
+         DO 5 I=1,NARG
+      NCOMB(I)=1
+      JB=JA-1+NENT(I)
+         DO 2 J=JA,JB
+      IF (ARG(I).LE.ENT(J)) GO TO 3
+    2 CONTINUE
+      J=JB
+    3 IF (J.NE.JA) GO TO 4
+      J=J+1
+    4 JR=J-1
+      D(I)=(ENT(J)-ARG(I))/(ENT(J)-ENT(JR))
+      IENT(I)=J-JA
+      KD=KD+IENT(I)*M
+      M=M*NENT(I)
+    5 JA=JB+1
+      FINT=0.
+   10 FAC=1.
+      IADR=KD
+      IFADR=1
+         DO 15 I=1,NARG
+      IF (NCOMB(I).EQ.0) GO TO 12
+      FAC=FAC*(1.-D(I))
+      GO TO 15
+   12 FAC=FAC*D(I)
+      IADR=IADR-IFADR
+   15 IFADR=IFADR*NENT(I)
+      FINT=FINT+FAC*TABLE(IADR)
+      IL=NARG
+   40 IF (NCOMB(IL).EQ.0) GO TO 80
+      NCOMB(IL)=0
+      IF (IL.EQ.NARG) GO TO 10
+      IL=IL+1
+         DO 50  K=IL,NARG
+   50 NCOMB(K)=1
+      GO TO 10
+   80 IL=IL-1
+      IF(IL.NE.0) GO TO 40
+      RETURN
+      END
+*
+*
+*
+*
+      FUNCTION ALPHAS (Q2, NAORD)
+*********************************************************************
+*                                                                   *
+*   THE ALPHA_S ROUTINE.                                            *
+*                                                                   *
+*   INPUT :  Q2    =  scale in GeV**2  (not too low, of course);    *
+*            NAORD =  1 (LO),  2 (NLO).                             *
+*                                                                   *
+*   OUTPUT:  alphas_s/(4 pi) for use with the GRV(98) partons.      *  
+*                                                                   *
+*******************************************************i*************
+*
+      IMPLICIT DOUBLE PRECISION (A - Z)
+      INTEGER NF, K, I, NAORD
+      DIMENSION LAMBDAL (3:6),  LAMBDAN (3:6), Q2THR (3)
+*
+*...HEAVY QUARK THRESHOLDS AND LAMBDA VALUES :
+      DATA Q2THR   /  1.960,  20.25,  30625. /
+      DATA LAMBDAL / 0.2041, 0.1750, 0.1320, 0.0665 /
+      DATA LAMBDAN / 0.2994, 0.2460, 0.1677, 0.0678 /
+*
+*...DETERMINATION OF THE APPROPRIATE NUMBER OF FLAVOURS :
+      NF = 3
+      DO 10 K = 1, 3
+      IF (Q2 .GT. Q2THR (K)) THEN
+         NF = NF + 1
+      ELSE
+          GO TO 20
+       END IF
+  10   CONTINUE
+*
+*...LO ALPHA_S AND BETA FUNCTION FOR NLO CALCULATION :
+  20   B0 = 11.- 2./3.* NF
+       B1 = 102.- 38./3.* NF
+       B10 = B1 / (B0*B0)
+       IF (NAORD .EQ. 1) THEN
+         LAM2 = LAMBDAL (NF) * LAMBDAL (NF)
+         ALP  = 1./(B0 * DLOG (Q2/LAM2))
+         GO TO 1
+       ELSE IF (NAORD .EQ. 2) then
+         LAM2 = LAMBDAN (NF) * LAMBDAN (NF)
+         B1 = 102.- 38./3.* NF
+         B10 = B1 / (B0*B0)
+       ELSE
+         WRITE (6,91)
+  91     FORMAT ('INVALID CHOICE FOR ORDER IN ALPHA_S')
+         STOP
+       END IF
+*
+*...START VALUE FOR NLO ITERATION :
+       LQ2 = DLOG (Q2 / LAM2)
+       ALP = 1./(B0*LQ2) * (1.- B10*DLOG(LQ2)/LQ2)
+*
+*...EXACT NLO VALUE, FOUND VIA NEWTON PROCEDURE :
+       DO 2 I = 1, 6
+       XL  = DLOG (1./(B0*ALP) + B10)
+       XLP = DLOG (1./(B0*ALP*1.01) + B10)
+       XLM = DLOG (1./(B0*ALP*0.99) + B10)
+       Y  = LQ2 - 1./ (B0*ALP) + B10 * XL
+       Y1 = (- 1./ (B0*ALP*1.01) + B10 * XLP
+     1       + 1./ (B0*ALP*0.99) - B10 * XLP) / (0.02D0*ALP)
+       ALP = ALP - Y/Y1
+  2    CONTINUE
+*
+*...OUTPUT :
+  1    ALPHAS = ALP
+       RETURN
+       END
