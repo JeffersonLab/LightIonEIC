@@ -1,0 +1,175 @@
+#! /usr/bin/perl
+use Math::Trig;
+use Math::Complex;
+# @XBJmin = (0.02,0.04,0.06,0.08);
+# @XBJmax = (0.04,0.06,0.08,0.10);
+@XBJmin = (0.04,0.06,0.10,0.12);
+@XBJmax = (0.06,0.08,0.12,0.14);
+#
+#  This is the script to caluclate the cross-section and F2D from the our MC event generator
+#  with taking into account ISS (Initial State Smearing) as well as Cross-section angle(50mrad)
+#
+
+#     wave function with Paris potential
+$CC =0.3939;
+#     wave function with Bonn potential
+#        $CC =0.3930;
+
+
+# @XScale =  (1E-8,1E-8); 
+@XScale =  (3.2E-5,3.2E-5); 
+                                                                  
+# $Lumi = 1E34; #1/cm2/sec
+# $time = 1E7; # approx. 4month 
+# #$time = 1.5E7; # approx. 6month 
+
+# Ch. Weiss used which is similar as (HERA) luminosity (10^-6 nb)
+# $Lumi = 1E33; #1/cm2/sec
+# $time = 1.2E6; # approx. 2weeks
+$Lumi = 1.E33; #1/cm2/sec
+$time = 1.9E6;
+#2.6E6; # approx. 30days
+
+ 
+$cm2nbarn = 1E33;
+# @Q2min = (5.0,6.0,7.0,8.0,9.0,11.0,13.0);
+# @Q2max = (6.0,7.0,8.0,9.0,11.0,13.0,15.0);
+
+# @Q2min = (18.0,20.0);
+@Q2min = (15.0,20.0);
+@Q2max = (20.0,22.0);
+
+
+$DeltaX = 0.02/2; # should be range of half 
+$DeltaQ2=5.0;
+$DeltaAlpha=0.04; # 
+$DeltaTprime=0.005;
+
+$pi=3.14159265358979;
+$alpha_R =1.0;
+
+
+system("rm -f  ./f2d_coll_stf_a/x_*.crs3a");
+system("rm -f  ./f2d_coll_stf_a/x_*.data3a");
+system("rm -f  ./f2d_coll_stf_a/x_*.evnt3a");
+system("rm -f  ./f2d_coll_stf_a/x_*.mc3a");
+system("rm -f  ./f2d_coll_stf_a/x_*.sdata3a");
+$DIR = ".";
+
+    $filename1a = "f2d_coll_stf_ascii_tprim_crs1.on_smear.dat";
+    $filename2a = "f2d_coll_stf_ascii_tprim_crs1.on_smear.dat";
+
+
+$LT = $Lumi*$time/$cm2nbarn; # inverse nbarn
+
+open(itf,"$DIR/$filename2a");
+@itemp = <itf>;
+close(itf);
+$mprot =0.93827;
+$mneu = 0.93955;
+$Edeu = 0.00222;
+$mdeu =  2*$mneu - $Edeu;
+
+$total =0;
+for($pp=0;$pp<=$#itemp;$pp++){
+    @vv = split(/,/,$itemp[$pp]);
+     $ccount = $vv[3]/1.;
+    $total = $total + $ccount;
+}
+printf ("total number of event = %11.2f\n",$total);
+
+    for($ix=0;$ix<4;$ix++){
+	$ixxmin = $XBJmin[$ix];
+	$ixxmax = $XBJmax[$ix];
+	$ixx = ($ixxmin+$ixxmax)/2;
+	$ixn = $ix +1;
+	$scalefactor = $XScale[$ix];
+
+	# for($iq=0;$iq<7;$iq++){
+	for($iq=0;$iq<=1;$iq++){
+	    $iq2min = $Q2min[$iq];
+	    $iq2max = $Q2max[$iq];
+	    $iq2 = ($iq2min+$iq2max)/2;
+	    $iqn = $iq +1;
+
+	    open(cout,">./f2d_coll_stf_a/x\_$ixn\_q2\_$iqn.crs3a");
+	    open(nout,">./f2d_coll_stf_a/x\_$ixn\_q2\_$iqn.evnt3a");
+	    open(MCout,">./f2d_coll_stf_a/x\_$ixn\_q2\_$iqn.mc3a");
+	    open(out2,">./f2d_coll_stf_a/x\_$ixn\_q2\_$iqn.sdata3a");
+	    
+	    open(ifile1,"$DIR/$filename1a");
+	    @read1 = <ifile1>;
+	    close(ifile1);
+	    
+	    open(ifile2,"$DIR/$filename2a");
+	    @read2 = <ifile2>;
+	    close(ifile2);
+	    
+	    for($jj=0;$jj<=$#read1;$jj++){
+		@items1a =split(/,/,$read1[$jj]);
+		@items2a =split(/,/,$read2[$jj]);
+		$xb      =  $items1a[0]/1.;
+		$q2      =  $items1a[1]/1.;
+		$tprim   =  $items1a[2]/1.;
+		$nevnt1a   =  $items1a[3]/1.;
+		$nevnt2a   =  $items1a[4]/1.;
+		# $Addfactor = 1/$tprim**(1/6);
+		$Addfactor = 2.0;
+
+		if($xb>$ixxmin&&$xb<$ixxmax){
+
+		    if($q2>$iq2min&&$q2<$iq2max){
+			
+			$error1a   =  sqrt($nevnt1a);
+		
+						
+			if($nevnt1a!=0){	    
+
+			    $Gamma = $DeltaX*$DeltaQ2*$DeltaAlpha*$DeltaTprime;
+
+
+			    $TPmin0 = -(-2*$Edeu*$mneu + $Edeu**2/2.);
+#			    print "Tprime min = $TPmin0 \n";
+#			    $PR2 = ($tprim-$TPmin0)/2;
+			    $PR2 = ($tprim)/2;
+			    $ER  = sqrt($PR2 + $mneu**2);
+			    $wfactor = $pi*$mdeu/4/$ER*$DeltaAlpha*$DeltaTprime;
+			    $xbprime = $xb*$Addfactor;
+			    $ReNormalFactor =0.4;      
+			    $JACOBIAN = $xbprime/sqrt($mprot**2-$tprim/2)*$ReNormalFactor;
+			    $CRS_eff = ($nevnt1a/$total)/$Gamma*$JACOBIAN;
+			    
+			    $ncount= $CRS_eff*$DeltaX*$DeltaQ2*$LT*$wfactor;
+			    $nerr = sqrt($ncount);
+
+			    $eCRS_eff = sqrt(2)*$CRS_eff/sqrt($ncount);
+
+
+			    $MCcount = $nevnt2a;
+			    $MCerr = 1/sqrt($MCcount)*100;
+
+			    print "$ncount $nerr  $CRS_eff \n";
+
+#			    print " $MCcount $MCerr  \n";
+#####  this is only for F2 structure function with nucleon pole allowed
+
+			}
+			printf cout ("%6.3e, %6.3e, %8.4e, %16.8e, %16.8e\n",$xb,$q2,$tprim,$CRS_eff,$eCRS_eff);
+			printf nout ("%6.3e, %6.3e, %8.4e, %16.8e, %16.8e\n",$xb,$q2,$tprim,$ncount,$nerr);
+			printf MCout ("%6.3e, %6.3e, %8.4e, %16.8e, %16.8e\n",$xb,$q2,$tprim,$MCcount,$MCerr);
+#			printf  ("%6.3f, %6.3f, %8.4f, %10.5e, %10.6e\n",$xb,$q2,$tprim,$ratio,$eratio);
+			if($tprim<0.035){
+			    printf  out2 ("%6.3e, %6.3e, %8.4e, %16.8e, %16.8e\n",$xb,$q2,$tprim,$CRS_eff,$eCRS_eff);
+			}
+
+		    }
+		    
+		}
+	    }
+	    close(out);
+	    close(cout);
+	    close(nout);
+	    close(MCout);
+	    close(out2);
+	}
+}
