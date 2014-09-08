@@ -1,0 +1,48 @@
+#! /usr/bin/perl
+use Math::Trig;
+use Math::Complex;
+
+
+$alpha_flag=1; # 1: left side cut of alpha bin, 2: right side cut 
+
+    print "\n\n YOU ARE RUNNING THE MC WITH ISS SMEARING OPTION \n\n\n";
+
+    system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b got_eic.kumac");
+    system("ls -l mc_collider_eic_2014tprim_crs.on_smear0.hbook ");
+    # system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b gocc1_eic_1a_pedro.kumac");
+    # system("ls -l mc_collider_eic_2014tprim_crs.on_smear1.hbook ");
+
+
+    system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b addhbook.kumac");
+
+    # # # system("scp mc_collider_eic_2014tprim_crs.on_smear0.hbook mc_collider_eic_2014tprim_crs.on_smear.hbook ");
+    # # # system("scp mc_collider_eic_2014tprim2.on_smear0.hbook  mc_collider_eic_2014tprim2.on_smear.hbook");
+
+
+
+    print "Check if the file is updated ?\n";
+
+    system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b allplot_f2d_tprim_extract.kumac ");
+    print "\n\n\n";
+    system("ls -l f2d_coll_stf_ascii_tprim_crs1.on_smear.dat  ");
+    print "\n\n\n";
+
+    system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b allplot_f2d_tprim_extract2.kumac ");
+    print "\n\n\n";
+    system("ls -l f2d_coll_stf_ascii_tprim2.on_smear.dat  ");
+    print "\n\n\n";
+
+    system("./IntegralF2DCollidertprim3A.exe");
+    system("./IntegralF2DCollidertprim4A.exe");
+ 
+
+    if($alpha_flag==1){
+	system("scp -r f2d_coll_stf_a  ./alpha1_left/");
+	system("scp -r f2d_coll_stf_b  ./alpha1_left/");
+    }
+    else{
+	system("scp -r f2d_coll_stf_a  ./alpha1_right/");
+	system("scp -r f2d_coll_stf_b  ./alpha1_right/");
+    }
+
+    print "Check - paw -b f2fitcomp.kumac -  \n";
