@@ -1,0 +1,22 @@
+#! /usr/bin/perl
+use Math::Trig;
+use Math::Complex;
+
+ system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b got_eic.kumac");
+ system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b got_eic2.kumac");
+# alpha_slice between -0.03 : +0.03
+
+
+system("ls -l mc_fsgen_eic_2014tprim_crs.hbook  ");
+
+print "Check if the file is updated ?\n";
+
+system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b allplot_f2d_tprim_extract.kumac");
+system("/u/site/cernlib/x86_64_rhel6.old/2005/bin/pawX11 -b allplot_f2d_tprim_extract2.kumac");
+
+
+system("IntegralF2Dtprim3.exe");
+
+print "scp ./f2d_stf/* ./f2d_stf_spec/f2d_stf_w_multi_tprim2/ \n";
+system("mv ./f2d_stf/* ./f2d_stf_spec/f2d_stf_w_multi_tprim2/");
+print "Check - exe allplot_f2dtprim_t2crs.kumac -  \n";
