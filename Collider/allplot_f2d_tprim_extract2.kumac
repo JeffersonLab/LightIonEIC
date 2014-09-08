@@ -1,4 +1,5 @@
-macro allplot_f2d_tprim_extract2
+macro  allcoll1_f2d_tprim_extract2.kumac 
+
    
          
    opt nfile
@@ -41,20 +42,23 @@ macro allplot_f2d_tprim_extract2
 |    set ysiz 63
 |    set xsiz 39
     
-   
-   
-   v/cre xbjmin(6) r 0.05 0.1 0.2 0.4 0.6 0.8
-   v/cre xbjmax(6) r 0.1 0.2 0.4 0.6 0.8 1.0
+   | v/cre xbjmin(4) r 0.02 0.04 0.06 0.08
+   | v/cre xbjmax(4) r 0.04 0.06 0.08 0.10
+    v/cre xbjmin(4) r 0.04 0.06 0.08 0.10
+    v/cre xbjmax(4) r 0.06 0.08 0.10 0.12
 
    
-   v/cre q2n(10) r 0.6 1.2 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-   v/cre q2min(10) r 0.5 0.7 1.5 3. 4. 5. 6. 7. 8. 9.
-   v/cre q2max(10) r 0.7 1.5 3. 4. 5. 6. 7. 8. 9. 10.
+   | v/cre   q2n(7) r 5.5 6.5 7.5 8.5 10.0 12.0 14.0 
+   | v/cre q2min(7) r 5.0 6.0 7.0 8.0  9.0 11.0 13.0 
+   | v/cre q2max(7) r 6.0 7.0 8.0 9.0 11.0 13.0 15.0 
+   v/cre   q2n(1) r 17.5 
+   v/cre q2min(1) r 15.0 
+   v/cre q2max(1) r 20.0
+
    
-   v/cre q2n2(10) r 0.7 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-   v/cre q2min2(10) r 0.5 1. 2. 3. 4. 5. 6. 7. 8. 9.
-   v/cre q2max2(10) r 1. 2. 3. 4. 5. 6. 7. 8. 9. 10
- 
+   v/cre ymaxset(5) r 20000000. 2000000. 600000. 60000. 60000.
+   v/cre ymaxfit(5) r 17000000. 1500000. 390000. 39000. 39000.
+  
    set ywin 0.5
    set xwin 0.9
    set xmgl 3.0
@@ -62,36 +66,19 @@ macro allplot_f2d_tprim_extract2
    
    set xsiz 20
    
-   
-   | for/file 99 alpha_q2_dependence.ps
-   | meta 99 -113
-   
-   h/file 1 mc_fsgen_eic_2014tprim2.hbook 
- |   zone 1 1
- |   opt logz
- |   /GRAPHICS/HPLOT/NULL 0. 1. 0. 10. SAB
- |   h/plot 1000 colz
- | |  atitle 'x?BJ!' 'Q^2! (GeV^2!)'
- |   opt linz
- |     exe window#push
- |     igset txci 1
- |     text  -0.05  0.7 'Q^2! (GeV^2!) ' 0.7 90
- |     text  0.9  -0.1 'x?BJ!' 0.7
- |     exe window#pop
- |     pic/print ./mc_eic_pic2014/xnj_q2.gif
-     
- |    wait
-    
+    h/file 1 mc_collider_eic_2014tprim_pedro.on_smear_b.hbook 
+|   h/file 1 mc_collider_eic_2014tprim2.on_smear.hbook
+
     
     set xmgl 2.9
     set xmgr 1.
     
     
-    ofilename = ./f2d_stf_ascii_tprim2.dat
+    ofilename = ./f2d_coll_stf_ascii_tprim2.on_smear.dat
      
    
-   do ix=1,6
-      xbj1 = xbjmin([ix])
+   do ix=1,4
+     xbj1 = xbjmin([ix])
      xbj2 = xbjmax([ix])
      xbj = ([xbj1]+[xbj2])/2
      xbjbin = [ix]
@@ -99,13 +86,13 @@ macro allplot_f2d_tprim_extract2
      
    
    if [ix] .eq. 1 then
-     iqm=2;iqx=4;
+     iqm=1;iqx=1;
    endif
    if [ix] .eq. 2 then
-     iqm=2;iqx=8;
+     iqm=1;iqx=1;
    endif
    if [ix] .ge. 3 then
-     iqm=2;iqx=9;
+     iqm=1;iqx=1;
    endif
    
      
@@ -114,16 +101,10 @@ macro allplot_f2d_tprim_extract2
      ymax0 = ymaxset([iq])/100
      ymaxfit0 = ymaxfit([iq])/100
      
-      if [ix] .lt. 2 then
-       q2in1 = q2min([iq])
-       q2in2 = q2max([iq])
-       q2val = q2n([iq])
-      else
-        q2in1 = q2min2([iq])
-        q2in2 = q2max2([iq])
-        q2val = q2n2([iq])
-      endif
-     
+     q2in1 = q2min([iq])
+     q2in2 = q2max([iq])
+     q2val = q2n([iq])
+
      zone 4 5
      
      do it=1,19
@@ -137,9 +118,11 @@ macro allplot_f2d_tprim_extract2
      |   itt = ([itt1]+[itt2])/2
        
       
-       | crs 
-       HID9 = 80000+1000*[ix]+100*[iq]+[it]
        
+				| weighted by CRS = FSIG*xjacobian
+|       HID9 = 50000+1000*[ix]+100*[iq]+[it]
+				| weighted by CRS = FSIG
+       HID9 = 40000+1000*[ix]+100*[iq]+[it]
        
    
      IGSET PMCI 2
@@ -149,8 +132,11 @@ macro allplot_f2d_tprim_extract2
      set hcol 4
      h/plot [HID9] e
      set hcol 1
-     ctemp = $hinfo([HID9],'entries')
- 
+     ctemp = $hinfo([HID9],'sum')
+     ctemp2 = $hinfo([HID9],'entries')
+     
+     mess [ctemp] [ctemp2]
+     
      vec/cr vevnt(1); 
      vec/cr vevnt2(1); 
      vec/cre vxb(1); vec/cre vq2(1); vec/cre vtt(1);
@@ -160,10 +146,11 @@ macro allplot_f2d_tprim_extract2
      VEC/INPUT  vq2(1) $eval([q2val])
      VEC/INPUT  vtt(1) $eval([itt])
      VEC/INPUT  vevnt(1) $eval([ctemp])
+     VEC/INPUT  vevnt2(1) $eval([ctemp2])
      
-     VEC/WRITE vxb(1),vq2(1),vtt(1),vevnt(1) [ofilename]  f6.2,',',f6.2,',',f9.4,',',f15.1 o
-     
-     vec/del vevnt,vxb,vq2,vtt
+      VEC/WRITE vxb(1),vq2(1),vtt(1),vevnt(1),vevnt2(1) [ofilename]  e9.2,', ',e9.2,', ',e16.10,', ',e16.10,', ',e16.10 o
+
+     vec/del vevnt,vevnt2,vxb,vq2,vtt
      
      
      opt liny
