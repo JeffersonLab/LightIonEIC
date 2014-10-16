@@ -1,7 +1,0 @@
-gfortran -o tag_app_evtp tag_app_evtp.o \
-tag_core.o \
-tag_user_f2.o \
-tag_user_res.o \
-tag_user_wf.o \
-grv98.o 
-
