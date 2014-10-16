@@ -4,11 +4,14 @@ Collider - This code uses simulates electron ion collisions, including the cross
 
 Fixed-Target - The fixed target code simulates the D(e,e'p_recoil) reaction for a fixed target.  This code can be is to test the collider code where in the limit of a zero momentum, intial deuteron, both codes should give the same answer.
 
+Onshell-Extrapolation - Using a physics model, we  studied the precision of on-shell extrapolations given different assumptions for data quality (randon and systematic errors) as well as studying the effect of doing a model independent vs. model depenedent extraction.
+
+Toolbox has two subdirectories:
+
 Hyde - The Hyde directory contains code to calculate the electron-ion collision in the lab frame and then boost to a frame where the ion has zero momentum.   This "fix target" frame is useful for many codes.   The code can also do the transformation back to the lab frame.
 
 Lorentz Transform - This is a basic utility to make the Lorentz transforms from the lab frame to the target rest frame.   
 
-Spectator Tagging - He we took the physics model of Christian Weiss and studied the precision of on-shell extrapolations given different assumptions for data quality (randon and systematic errors) as well as studying the effect of doing a model independent vs. model depenedent extraction.
 
 -
 
