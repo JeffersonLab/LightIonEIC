@@ -1,0 +1,4 @@
+gfortran -o tag_app_f2x tag_app_f2x.o \
+tag_user_f2.o \
+grv98.o
+
