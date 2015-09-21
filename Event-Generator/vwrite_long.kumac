@@ -1,0 +1,19 @@
+macro vwrite_long
+   
+   i=1
+	 
+   infilename = ./ed_semi_eic79.dat
+|   x,q2,p_rt,alpha_r,si,p_x2,e_x,xmx2,wn,tprime,t,t_min,crs2,crs1,crs
+   mess 'Re-oragnize the file format->' [infilename]
+   nt/list
+   hi/delete 10
+| pRTs : recoil spectator momentum with w/o smearing, pRT0 : w/ smearing
+| calculation from pRTs = sqrt(tPrime/2), pRT0 = sqrt(tPrime0/2) 
+   nt/create 10 'NT10 eic mc' 18 ! ! x q2 p_rt alpha_r si f2dext e_x xjacob xkjfac tprim t theta_r pRTs pRT0 p_rx p_ry p_rz crs0
+   nt/list
+   nt/read 10  [infilename] !  '18e16.8'  !  !
+   nt/print 10
+   h/file 1 ./nt10_data.enx_[i].hbook 1024 -N
+   h/hio/hrout '0' 'T'
+   close 0;
+   

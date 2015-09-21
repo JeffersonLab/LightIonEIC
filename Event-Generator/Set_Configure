@@ -1,0 +1,4 @@
+#!/bin/csh
+source /group/clas/builds/PRODUCTION/packages/cms/jlab.cshrc
+setenv ROOTSYS /apps/root/PRO/root
+setenv PATH  ${PATH}:${CERNSYS}/bin:${ROOTSYS}/bin

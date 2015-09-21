@@ -1,0 +1,67 @@
+*DECK TAGF2N
+      SUBROUTINE TAGF2N(F2, X, QQ, IPN)
+C
+C     PACKAGE TAG -- DEUTERON DIS WITH SPECTATOR TAGGING
+C     AUTHOR C. WEISS (WEISS.AT.JLAB.ORG)
+C
+C     USER-DEFINED ROUTINE
+C     NUCLEON STRUCTURE FUNCTION F2
+C
+C     INPUT:
+C     X     X VARIABLE FOR NUCLEON
+C     QQ    Q2 (GEV**2)
+C     IPN   SWITCH: 1  PROTON, 2  NEUTRON
+C
+C     OUTPUT:
+C     F2    NUCLEON STRUCTURE FUNCTION F2
+C
+C     REVISION HISTORY:
+C     13MAY14   FIRST VERSION
+C     31OCT14   CHANGED NAME TO TAGF2N (NEW NAMING SCHEME)
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+C
+C     ...QUARK CHARGES
+C
+      EU   =  0.6666666666666D0
+      ED   = -0.3333333333333D0
+      ES   = -0.3333333333333D0
+C
+C     ...GRV98 PDF PARAMETRIZATION
+C
+      ISET = 1
+      CALL GRV98PA(ISET, X, QQ, UV, DV, US, DS, SS, GL)
+C
+      IF (IPN.EQ.1)      THEN
+         F2 = EU**2*(UV + 2*US)
+     *      + ED**2*(DV + 2*DS)
+     *      + ES**2*(     2*SS)
+      ELSE IF (IPN.EQ.2) THEN
+         F2 = EU**2*(DV + 2*DS)
+     *      + ED**2*(UV + 2*US)
+     *      + ES**2*(     2*SS)
+      ENDIF
+C
+      END
+C
+C---------------------------------------------------------------------
+C
+*DECK GRV98
+      BLOCK DATA GRV98
+C
+C     INITIALIZATION OF GRV98 PDF PARAMETRIZATION
+C
+C     NOTE: IF MULTIPLE PDF SETS ARE USED IN THE SAME RUN,
+C     THE INITIALIZATION MUST BE RESET BY THE CALLING PROGRAM.
+C
+      IMPLICIT DOUBLE PRECISION (A - H, O - Z)
+C
+      COMMON /INTINIP/ IINIP
+      COMMON /INTINIF/ IINIF
+      DATA IINIP /0/
+      DATA IINIF /0/
+C
+      END
+C
+C---------------------------------------------------------------------
+C

@@ -1,0 +1,10 @@
+simple step
+
+0/ ./Set_Configure
+-> set the configuration of ROOT and PATH
+
+1/ ./RunSTEG_PhaseSpace.exe
+-> generate event in the phase-space
+
+2/ ./MainRunEIC_STEG.exe
+-> event is weighted by cross-section with given physics model

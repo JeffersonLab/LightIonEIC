@@ -1,0 +1,59 @@
+macro krun_files
+*
+j0 = [#]-4
+j1 = [[j0]]
+if [[#]] .ne. '-f' then
+nfile=[#]-3
+nfiles=[[nfile]]
+nevent=[#]-2
+nevents=[[nevent]]
+filetostart = [#]-1
+startfile = [[filetostart]]
+nfl = [#] - 5
+nfl = [nfl] - [startfile]
+totfil=[nfl]+[j1]
+nfil2p = [nfiles] - [j1]
+if [nfil2p].ge.[nfl] .OR. [nfiles].eq.0 then
+  nfil2p = [nfl]
+elseif [nfil2p] = 0 then
+ j = [j1]
+  GO TO END
+else
+  nfil2p = [nfil2p] - 1
+endif
+if [nevents] = 0 then
+nevents=1000000
+mess All events in the N-tuples will be processed 
+else
+mess Will be processed [nevents] events from each N-tuple only
+endif
+if [nfiles] = 0 then
+mess All files will be processed    Name of the function -> [[#]]
+else
+mess Number of files to process = [nfiles]    Name of the function -> [[#]]
+endif
+clos 1
+j = [j1]
+mess Startfile [startfile] [nfil2p]
+DO I=[startfile],[nfil2p]+[startfile]
+mess Proccessing file  [I] --> [[I]]
+j = [j]+1
+istr=[i]+[startfile]-1
+flnam=[[#]]([j].)
+hi/file 1 [[I]] 0 -x
+cdir //lun1
+nt/loop 10 [flnam] [nevents] 1
+cdir //pawc
+clos 1
+ENDDO
+else
+nfiles=[#]-5
+mess Number of N-tuple files  =>  [nfiles]
+j = [nfiles]
+endif
+END:
+RETURN [j]
+
+
+
+

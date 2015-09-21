@@ -1,0 +1,19 @@
+macro vwrite_long
+   
+   i=1
+	 
+   infilename = ./ed_semi_eic79.dat
+|   x,q2,p_rt,alpha_r,si,p_x2,e_x,xmx2,wn,tprime,t,t_min,crs2,crs1,crs
+   mess 'Re-oragnize the file format->' [infilename]
+   nt/list
+   hi/delete 10
+||| polarized cross section (+/- helicity state)
+|| xkjfac = Depolarization factor, asym = Raw Asymmetry, crs1= FSGI(hel=+1) crs2= FSGI(hel=-1)
+   nt/create 10 'NT10 eic mc' 18 ! ! x q2 p_rt alpha_r yy epsout pol_ele xjacob depol tprim t pol_ion fsig1 fsig2 p_rx p_ry p_rz asym0
+   nt/list
+   nt/read 10  [infilename] !  '18e12.8'  !  !
+   nt/print 10
+   h/file 1 ./nt10_data.enx_[i].hbook 1024 -N
+   h/hio/hrout '0' 'T'
+   close 0;
+   
