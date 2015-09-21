@@ -1,9 +1,7 @@
-Written by Oz Amram July 2014
-amram@jlab.org
-
 This directory contains code to generate electron-deuteron scattering cross section data from
-Misak's and Christian's models. It also contains code to extract F2N from this data for different
-orders of fit and t' ranges. 
+Misak's and Christian's models and was also designed to be used with the event generator
+for extract F2N from virtual data.   This allowed for testing of different order fits
+as well as different t' ranges.
 
 The the directory is divided into the sub-directories christians_model misak_model and data_reading.
 The cross section data is generated from modified fortran code located in the christians_model and 
