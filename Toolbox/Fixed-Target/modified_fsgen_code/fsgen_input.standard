@@ -1,0 +1,58 @@
+100000  		 / number of (gp) interactions to be generated
+1	 1  	/ number of output files with above number of events
+1		  / number of final states per (gp) interaction to be generated
+100.	  	 / incident electron energy
+10.,15.          / total hadron mass or real photon energy range (W)
+0.2,1.          / photon mass (for real photons =0.) Q2
+0.01,0.1        	/ X Bjorken
+45 2112  2212         /target   target-nucleon  spectator-nucleon, if last two are =0, target is the first one
+/ Log file 
+gn_nspec_eic.log
+/ On the following lines (input BOS file, output BOs file & N-tuple file) 0=.true.
+1         test_eic.evt 
+0         gn_nspec_eic_  
+0         gd_test_eic.hbook
+/ distribution parameters 
+1               / Power of Q2 dependence, if <0 user suplied function is needed
+0.1   0.0  1.0            / first parameter->slop of t-dipendance, if <0 user suplied function is needed, second and third are |t_min| and |t_max|
+1              /Genbod kgenev, =1 for constant weights, =2 for Fermi energy dependent weughts
+'list'	         / 'list' or 'notlist'  prints to standart out
+'decay'	         / decay or not final decayed particles
+'noedit'	 / edit or not final LUND data buffer
+/ Final state that should be generated /
+2       / number of outgoing particles
+-211   0  0  0    0    0  0.        
+2212   0  0  0    0    0  0.        
+/ Decay channels for some of decay products /
+9                 / Just the number of defined particles
+71 318 318  0   0   0   0
+111 670 671  0   0   0   0
+ 113 708 711  0   0   0   0
+ 221 672 678  0   0   0   0
+ 223 712 716  0   0   0   0
+ 331 679 684  0   0   0   0
+ 333 717 724  0   0   0   0
+ 310 970 971  0   0   0   0
+ 2224 1126 1126  0   0   0   0
+/ RANMAR integer sequence number (1 to 900000000) for initialization.
+randnumber
+/ Run number (default 1)
+1
+/ Target pozition (Z)
+0.0 0.0 0.0
+/ crate or not TAGR bank
+0
+/ Some fiducial acceptances
+8           / number of lines below
+11   0. 6. 0. 180. -180. 180.  0
+2212 0.3 6. 5. 180. -180. 180.  0
+2112 0.3 6. 8. 180. -180. 180.  0
+45 0. 6. 0. 180. -180. 180. 0
+211 0. 6. 0. 180. -180. 180. 0
+-211 0. 6. 0. 180. -180. 180.  0
+321 0.2 6. 5. 180. -180. 180.  0
+-321 0. 6. 10. 180. -180. 180.  0
+/ Format in above PID pmin pmax thmin thmax phmin phmax flag
+/ No fiducial cuts if flag =0; uses max min of angles if 1; needs user
+/ fiducial function if -1
+0         gn_ed_eic.txt 

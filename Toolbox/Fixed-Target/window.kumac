@@ -1,0 +1,56 @@
+* WINDOW.KUMAC          Manipulate window coordinate system
+*
+* 941221  Michael Kelsey
+* 951016  Remove OPT TIC/NTIC -- Old PAW bug fixed
+
+MACRO WINDOW
+  IF [1]='?' THEN
+    EXEC WINDOW_HELP
+    EXITM
+  ENDIF
+RETURN
+
+*--------------------------- INFORMATION -------------------------------*
+
+MACRO WINDOW_HELP
+  MESSAGE 'WINDOW.KUMAC         Manipulate window coordinate system'
+  MESSAGE
+  MESSAGE 'Allows the user to conveniently set the current coordinate'
+  MESSAGE 'system to standard dimensions (0 to 1), and then restore the'
+  MESSAGE 'previous coordinates.  This is handy for adding labels or'
+  MESSAGE 'graphics to a histogram, independent of the plotted values.'
+  MESSAGE
+  MESSAGE '#PUSH                Save coordinates, set to 0-1,0-1'
+  MESSAGE '#POP                 Restore original coordinate system'
+  MESSAGE
+RETURN
+
+*--------------------------- SUBROUTINES -------------------------------*
+
+* Save window coordinate system and set as NULL 0 1 0 1
+
+MACRO PUSH
+  IF $VEXIST(WIN_XMIN)<>0 THEN
+    MESSAGE Window coordinates already saved.  Please POP first.
+    EXITM
+  ENDIF
+
+  VEC/CRE WIN_XMIN R $GRAFINFO('WNXMIN')
+  VEC/CRE WIN_XMAX R $GRAFINFO('WNXMAX')
+  VEC/CRE WIN_YMIN R $GRAFINFO('WNYMIN')
+  VEC/CRE WIN_YMAX R $GRAFINFO('WNYMAX')
+
+  NULL 0 1 0 1 ABS
+RETURN
+
+* Restore window coordinates from contents of vectors
+
+MACRO POP
+  IF $VEXIST(WIN_XMIN)=0 THEN
+    EXITM
+  ENDIF
+
+  NULL WIN_XMIN WIN_XMAX WIN_YMIN WIN_YMAX ABS
+
+  VEC/DELETE WIN_XMIN,WIN_XMAX,WIN_YMIN,WIN_YMAX
+RETURN
