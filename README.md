@@ -1,9 +1,6 @@
 Electron Ion Collider Semi-Inclusive Monte Carlo
 =================================================
-Polarized & unpolarized light ions will play a major role in the physics program of an electron ion collider.   In an effect to bettter quantify the impact this physics would have, a collaborative effort of theorists and experimentalists was proposed and funded by Jefferson Lab's Laboratory-Directed Research and Development (LDRD) program as FY14/15 Project "Physics potential of polarized light ions with EIC at JLab." The resources developed (theoretical models, computer codes, event generators) are available here for scientific applications and further development.  
-
-More details about the project as well as a collection of results and publications can be found at
-https://www.jlab.org/theory/tag/.
+Polarized & unpolarized light ions will play a major role in the physics program of an electron ion collider.   In an effect to bettter quantify the impact this physics would have, a collaborative effort of theorists and experimentalists was proposed and funded by Jefferson Lab's Laboratory-Directed Research and Development (LDRD) program as FY14/15 Project "Physics potential of polarized light ions with EIC at JLab." The resources developed (theoretical models, computer codes, event generators) are available here for scientific applications and further development.  More details about the physics of semi-inclusive scattering, as well as a collection of results and publications can be found at https://www.jlab.org/theory/tag/.
 
 Event-Generator
 ---------------
