@@ -4,14 +4,14 @@ Polarized & unpolarized light ions will play a major role in the physics program
 
 Event-Generator
 ---------------
-This code uses simulates electron ion collisions, including the cross angle, as well as a D(e,e'p_recoil)X cross section calculation.  The output of this code is setup to be passed to the full detector simulation.  This code has been cross checked against the fixed target code where in the limit of a zero momentum hardon, both codes give the same answer.
+This code uses simulates electron ion collisions, including the cross angle, as well as a D(e,e'p_recoil)X cross section calculation.  The output of this code is setup to be passed to the full detector simulation.  This code has been cross checked against a fixed target code, found in the toolbox directory, where in the limit of a zero momentum hardon, both codes give the same answer.   Detailed documentaion for the event generator can be found at https://github.com/JeffersonLab/LightIonEIC/blob/master/Event-Generator/Documenation/STEGs.pdf.
 
 Onshell-Extrapolation
 ---------------------
-Using a physics model, we  studied the precision of on-shell extrapolations given different assumptions for data quality (randon and systematic errors) as well as studying the effect of doing a model independent vs. model depenedent extraction.
+Using a physics model, we  studied the precision of on-shell extrapolations given different assumptions for data quality (randon and systematic errors) as well as studying the effect of doing a model independent vs. model depenedent extraction.  
 
-Theory-Code
------------
+Theory-Codes
+------------
 Symbolic links to the theory codes currently included with the event generator.
 
 Toolbox
