@@ -23,7 +23,7 @@ Smaller codes that were developed during the project for debugging:
 
 * Lorentz-Transform - A basic utility to make the Lorentz transforms from the lab frame to the target rest frame.   
 
-* EIC-Physics - The EIC-Physics directory contains code to calculate the electron-ion collision in the lab frame and then boost to a frame where the ion has zero momentum.   This "fix target" frame is useful for many codes.   The code can also do the transformation back to the lab frame.
+* Spectator-Tagging - This directory contains code started by Charles Hyde to calculate the electron-ion collision in the lab frame and then boost to a frame where the ion has zero momentum.   This "fix target" frame is useful for many codes.   The code can also do the transformation back to the lab frame.
 
 
 
