@@ -19,7 +19,7 @@ Toolbox
 
 Smaller codes that were developed during the project for debugging:
 
-* Fixed-Target - The fixed target code simulates the D(e,e'p_recoil) reaction for a fixed target.  This code can be is to test the collider code where in the limit of a zero momentum, intial deuteron, both codes should give the same answer.
+* Fixed-Target - This code simulates the D(e,e'p_recoil) reaction for a fixed target.  This code can be is to test the collider code where in the limit of a zero momentum, intial deuteron, both codes should give the same answer.
 
 * Lorentz-Transform - A basic utility to make the Lorentz transforms from the lab frame to the target rest frame.   
 
