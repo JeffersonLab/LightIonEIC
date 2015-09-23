@@ -1,5 +1,5 @@
 
-Semi-Inclusive Theory Codes
+Spectator Taggering Theory Codes
 ---------------------------
 
 The physics codes found here are included with the event generator.   The code from Misak Sargsian was developed prior to this project
