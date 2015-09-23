@@ -1,3 +1,6 @@
+Electron Ion Collider Semi-Inclusive Monte Carlo
+=================================================
+
 Polarized & unpolarized light ions will play a major role in the physics program of an electron ion collider.   In this git repository, the codes that are being used to study the electron light-ion collision are stored and documented. 
 
 Event-Generator - This code uses simulates electron ion collisions, including the cross angle, as well as a D(e,e'p_recoil)X cross section calculation.  The output of this code is setup to be passed to the full detector simulation.  This code has been cross checked against the fixed target code where in the limit of a zero momentum hardon, both codes give the same answer.
