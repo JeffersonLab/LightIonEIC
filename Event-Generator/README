@@ -1,4 +1,15 @@
-simple step
+
+Event-Generator
+===============
+
+This code uses simulates electron ion collisions, including the cross angle, as well as a D(e,e'p_recoil)X cross 
+section calculation. The output of this code is setup to be passed to the full detector simulation. This code has 
+been cross checked against a fixed target code, found in the toolbox directory, where in the limit of a zero momentum 
+hardon, both codes give the same answer.  Detailed documentaion for the event generator can be found at 
+https://github.com/JeffersonLab/LightIonEIC/blob/master/Event-Generator/Documenation/STEGs.pdf.
+
+Basic Configuration
+--------------------
 
 0/ ./Set_Configure
 -> set the configuration of ROOT and PATH
