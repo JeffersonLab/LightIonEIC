@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>LightIonEIC by JeffersonLab</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>LightIonEIC</h1>
+          <h2>Light Ion EIC Code development</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/JeffersonLab/LightIonEIC/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/JeffersonLab/LightIonEIC/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/JeffersonLab/LightIonEIC" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <h1>
+<a id="light-ion-spectator-tagging-project" class="anchor" href="#light-ion-spectator-tagging-project" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Light Ion Spectator Tagging Project</h1>
+
+<p>Spectator tagging with polarized &amp; unpolarized light ions will play a major role in the physics program of the future electron ion collider.   In an effect to bettter quantify the impact this physics would have, a collaborative effort of theorists and experimentalists proposed a Jefferson Lab's Laboratory-Directed Research and Development (LDRD) FY14/15 Project "Physics potential of polarized light ions with EIC at JLab." The resources developed (theoretical models, computer codes, event generators) as part of this project are available here for scientific applications and further development.  More details about the physics of semi-inclusive scattering, as well as a collection of results and publications can be found at <a href="https://www.jlab.org/theory/tag/">https://www.jlab.org/theory/tag/</a>.</p>
+
+<h2>
+<a id="event-generator" class="anchor" href="#event-generator" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Event-Generator</h2>
+
+<p>This code uses simulates electron ion collisions, including the cross angle, as well as a D(e,e'p_recoil)X cross section calculation.  The output of this code is setup to be passed to the full detector simulation.  This code has been cross checked against a fixed target code, found in the toolbox directory, where in the limit of a zero momentum hardon, both codes give the same answer.   Detailed documentaion for the event generator can be found at <a href="https://github.com/JeffersonLab/LightIonEIC/blob/master/Event-Generator/Documenation/STEGs.pdf">https://github.com/JeffersonLab/LightIonEIC/blob/master/Event-Generator/Documenation/STEGs.pdf</a>.</p>
+
+<h2>
+<a id="onshell-extrapolation" class="anchor" href="#onshell-extrapolation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Onshell-Extrapolation</h2>
+
+<p>Using a physics model, we  studied the precision of on-shell extrapolations given different assumptions for data quality (randon and systematic errors) as well as studying the effect of doing a model independent vs. model depenedent extraction.  </p>
+
+<h2>
+<a id="theory-codes" class="anchor" href="#theory-codes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Theory-Codes</h2>
+
+<p>Symbolic links to the theory codes currently included with the event generator.</p>
+
+<h2>
+<a id="toolbox" class="anchor" href="#toolbox" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Toolbox</h2>
+
+<p>Smaller codes that were developed during the project for debugging:</p>
+
+<ul>
+<li><p>Fixed-Target - This code simulates the D(e,e'p_recoil) reaction for a fixed target.  This code can be is to test the collider code where in the limit of a zero momentum, intial deuteron, both codes should give the same answer.</p></li>
+<li><p>Lorentz-Transform - A basic utility to make the Lorentz transforms from the lab frame to the target rest frame.   </p></li>
+<li><p>Spectator-Tagging - This directory contains code started by Charles Hyde to calculate the electron-ion collision in the lab frame and then boost to a frame where the ion has zero momentum.   This "fix target" frame is useful for many codes.   The code can also do the transformation back to the lab frame.</p></li>
+</ul>
+
+<h2></h2>
+
+<p>git clone <a href="https://github.com/JeffersonLab/LightIonEIC">https://github.com/JeffersonLab/LightIonEIC</a></p>
+
+<hr>
+        </section>
+
+        <footer>
+          LightIonEIC is maintained by <a href="https://github.com/JeffersonLab">JeffersonLab</a><br>
+          This page was generated by <a href="https://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
